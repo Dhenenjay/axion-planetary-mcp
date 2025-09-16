@@ -22,20 +22,43 @@ const BANNER = `
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
 ║     🌍 AXION PLANETARY MCP                               ║
-║     Transform Claude into a Geospatial Powerhouse       ║
+║     Earth Engine for Any MCP Client                     ║
 ║                                                          ║
 ╚══════════════════════════════════════════════════════════╝
 `;
 
-// Platform-specific paths
-const getClaudeConfigPath = () => {
-  if (platform() === 'win32') {
-    return join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
-  } else if (platform() === 'darwin') {
-    return join(homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
-  } else {
-    return join(homedir(), '.config', 'Claude', 'claude_desktop_config.json');
+// MCP Client detection and paths
+const MCPClients = {
+  claude: {
+    name: 'Claude Desktop',
+    configPath: () => {
+      if (platform() === 'win32') {
+        return join(process.env.APPDATA || '', 'Claude', 'claude_desktop_config.json');
+      } else if (platform() === 'darwin') {
+        return join(homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
+      } else {
+        return join(homedir(), '.config', 'Claude', 'claude_desktop_config.json');
+      }
+    }
+  },
+  cursor: {
+    name: 'Cursor',
+    configPath: () => join(process.cwd(), '.cursor', 'mcp', 'config.json')
   }
+};
+
+// Get available MCP clients
+const detectMCPClients = async () => {
+  const detected = [];
+  for (const [key, client] of Object.entries(MCPClients)) {
+    try {
+      await fs.access(dirname(client.configPath()));
+      detected.push(key);
+    } catch {
+      // Client not installed
+    }
+  }
+  return detected;
 };
 
 // Get user data directory
@@ -169,10 +192,10 @@ class AxionPlanetaryCLI {
     
     const credentialsPath = await this.setupCredentials();
     
-    // Step 2: Configure Claude Desktop
-    console.log('\n' + colors.bgBlue + colors.white + ' STEP 2/3: Claude Desktop Configuration ' + colors.reset + '\n');
+    // Step 2: Configure MCP Client
+    console.log('\n' + colors.bgBlue + colors.white + ' STEP 2/3: MCP Client Configuration ' + colors.reset + '\n');
     
-    const claudeConfigured = await this.configureClaudeDesktop(credentialsPath);
+    const clientConfigured = await this.configureMCPClient(credentialsPath);
     
     // Step 3: Test connection
     console.log('\n' + colors.bgBlue + colors.white + ' STEP 3/3: Testing Connection ' + colors.reset + '\n');
@@ -184,7 +207,7 @@ class AxionPlanetaryCLI {
       setupComplete: true,
       credentialsPath: credentialsPath === 'DEMO_MODE' ? null : credentialsPath,
       mode: credentialsPath === 'DEMO_MODE' ? 'demo' : 'full',
-      claudeConfigPath: getClaudeConfigPath(),
+      mcpClient: this.selectedClient,
       serverPort: 3000,
       installedVersion: this.version,
       setupDate: new Date().toISOString()
@@ -196,8 +219,8 @@ class AxionPlanetaryCLI {
     console.log('\n' + colors.bgGreen + colors.white + ' 🎉 SETUP COMPLETE! ' + colors.reset + '\n');
     
     console.log(colors.bright + 'What\'s Next?' + colors.reset);
-    console.log('1. ' + colors.green + 'Restart Claude Desktop' + colors.reset);
-    console.log('2. Look for the MCP indicator in Claude');
+    console.log('1. ' + colors.green + 'Restart your MCP client' + colors.reset);
+    console.log('2. Look for the MCP indicator in your client');
     console.log('3. Try your first query:\n');
     
     console.log(colors.cyan + '   Example Queries to Try:' + colors.reset);
@@ -353,35 +376,79 @@ class AxionPlanetaryCLI {
     return await this.setupCredentials();
   }
 
-  async configureClaudeDesktop(credentialsPath) {
-    const claudeConfigPath = getClaudeConfigPath();
-    const claudeConfigDir = dirname(claudeConfigPath);
+  async configureMCPClient(credentialsPath) {
+    // Detect available MCP clients
+    const availableClients = await detectMCPClients();
     
-    const progress = new ProgressIndicator('Configuring Claude Desktop');
+    let selectedClient;
+    if (availableClients.length === 0) {
+      console.log(colors.yellow + '\n⚠ No MCP clients detected. Which one will you be using?' + colors.reset);
+      console.log('  1. Claude Desktop');
+      console.log('  2. Cursor');
+      console.log('  3. Other MCP client\n');
+      
+      const choice = await question('Select (1-3): ');
+      selectedClient = choice === '1' ? 'claude' : choice === '2' ? 'cursor' : 'other';
+    } else if (availableClients.length === 1) {
+      selectedClient = availableClients[0];
+      log.info(`Detected ${MCPClients[selectedClient].name}`);
+    } else {
+      console.log('\nMultiple MCP clients detected. Which one to configure?');
+      availableClients.forEach((client, i) => {
+        console.log(`  ${i + 1}. ${MCPClients[client].name}`);
+      });
+      const choice = await question('\nSelect: ');
+      selectedClient = availableClients[parseInt(choice) - 1] || availableClients[0];
+    }
+    
+    this.selectedClient = selectedClient;
+    
+    if (selectedClient === 'other') {
+      console.log('\n' + colors.cyan + 'Manual Configuration Required:' + colors.reset);
+      console.log('\nAdd this to your MCP client configuration:');
+      console.log(colors.dim + JSON.stringify({
+        "axion-planetary": {
+          "command": "node",
+          "args": [join(__dirname, 'dist', 'index.mjs')],
+          "env": {
+            "GOOGLE_APPLICATION_CREDENTIALS": credentialsPath === 'DEMO_MODE' ? '' : credentialsPath,
+            "GCS_BUCKET": "earth-engine-exports",
+            "DISABLE_THUMBNAILS": "true"
+          }
+        }
+      }, null, 2) + colors.reset);
+      return true;
+    }
+    
+    const clientConfig = MCPClients[selectedClient];
+    const configPath = clientConfig.configPath();
+    const configDir = dirname(configPath);
+    
+    const progress = new ProgressIndicator(`Configuring ${clientConfig.name}`);
     progress.start();
     
     try {
       // Ensure directory exists
-      await fs.mkdir(claudeConfigDir, { recursive: true });
+      await fs.mkdir(configDir, { recursive: true });
       
       // Check for existing config
-      let claudeConfig = {};
+      let config = {};
       try {
-        const existing = await fs.readFile(claudeConfigPath, 'utf-8');
-        claudeConfig = JSON.parse(existing);
+        const existing = await fs.readFile(configPath, 'utf-8');
+        config = JSON.parse(existing);
       } catch {
         // No existing config
       }
       
       // Initialize mcpServers if not present
-      if (!claudeConfig.mcpServers) {
-        claudeConfig.mcpServers = {};
+      if (!config.mcpServers) {
+        config.mcpServers = {};
       }
       
       // Add our MCP server
       const mcpServerPath = join(__dirname, 'dist', 'index.mjs');
       
-      claudeConfig.mcpServers['axion-planetary'] = {
+      config.mcpServers['axion-planetary'] = {
         command: 'node',
         args: [mcpServerPath],
         env: {
@@ -393,11 +460,11 @@ class AxionPlanetaryCLI {
       };
       
       // Save configuration
-      await fs.writeFile(claudeConfigPath, JSON.stringify(claudeConfig, null, 2));
+      await fs.writeFile(configPath, JSON.stringify(config, null, 2));
       
       progress.stop(true);
-      log.success('Claude Desktop configured successfully!');
-      console.log(`  Config location: ${colors.dim}${claudeConfigPath}${colors.reset}`);
+      log.success(`${clientConfig.name} configured successfully!`);
+      console.log(`  Config location: ${colors.dim}${configPath}${colors.reset}`);
       
       return true;
     } catch (error) {
@@ -432,10 +499,10 @@ class AxionPlanetaryCLI {
     console.log('\n' + colors.bgBlue + colors.white + ' Update Credentials ' + colors.reset + '\n');
     
     const credentialsPath = await this.setupCredentials();
-    await this.configureClaudeDesktop(credentialsPath);
+    await this.configureMCPClient(credentialsPath);
     
     log.success('Credentials updated successfully!');
-    log.info('Restart Claude Desktop to apply changes');
+    log.info('Restart your MCP client to apply changes');
   }
 
   async start() {
@@ -533,19 +600,30 @@ class AxionPlanetaryCLI {
       console.log(`    Run: ${colors.cyan}axion-mcp start${colors.reset}`);
     }
     
-    // Claude Desktop status
-    console.log('\n' + colors.bright + 'Claude Desktop:' + colors.reset);
-    const claudeConfigPath = getClaudeConfigPath();
-    try {
-      const claudeConfig = JSON.parse(await fs.readFile(claudeConfigPath, 'utf-8'));
-      if (claudeConfig.mcpServers && claudeConfig.mcpServers['axion-planetary']) {
-        console.log(`  ✓ MCP: ${colors.green}Configured${colors.reset}`);
-        console.log(`    ${colors.dim}Restart Claude to load changes${colors.reset}`);
-      } else {
-        console.log(`  ✗ MCP: ${colors.red}Not configured${colors.reset}`);
+    // MCP Client status
+    console.log('\n' + colors.bright + 'MCP Client:' + colors.reset);
+    
+    if (config.mcpClient) {
+      const client = MCPClients[config.mcpClient] || { name: 'Unknown Client' };
+      console.log(`  ✓ Client: ${colors.green}${client.name}${colors.reset}`);
+      
+      if (config.mcpClient !== 'other') {
+        try {
+          const configPath = client.configPath();
+          const clientConfig = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+          if (clientConfig.mcpServers && clientConfig.mcpServers['axion-planetary']) {
+            console.log(`  ✓ MCP: ${colors.green}Configured${colors.reset}`);
+            console.log(`    ${colors.dim}Restart ${client.name} to load changes${colors.reset}`);
+          } else {
+            console.log(`  ✗ MCP: ${colors.red}Not configured${colors.reset}`);
+          }
+        } catch {
+          console.log(`  ✗ Config: ${colors.red}Not found${colors.reset}`);
+        }
       }
-    } catch {
-      console.log(`  ✗ Config: ${colors.red}Not found${colors.reset}`);
+    } else {
+      console.log(`  ✗ No MCP client configured`);
+      console.log(`    Run: ${colors.cyan}axion-mcp init${colors.reset}`);
     }
     
     // Earth Engine status

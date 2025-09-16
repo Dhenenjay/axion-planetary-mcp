@@ -2,14 +2,14 @@
   
 # 🌍 Axion Planetary MCP
 
-### Transform Claude Desktop into a Geospatial Analysis Powerhouse
+### Transform Any MCP Client into a Geospatial Analysis Powerhouse
 
 [![npm version](https://img.shields.io/npm/v/axion-planetary-mcp)](https://www.npmjs.com/package/axion-planetary-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Earth Engine](https://img.shields.io/badge/Google-Earth%20Engine-4285F4)](https://earthengine.google.com/)
-[![Claude Desktop](https://img.shields.io/badge/Claude-Desktop-6366F1)](https://claude.ai/download)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-brightgreen)](https://modelcontextprotocol.io/)
 
-**Access Google Earth Engine's massive satellite data catalog through natural conversation in Claude Desktop**
+**Access Google Earth Engine's massive satellite data catalog through natural conversation in any MCP-compatible client**
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Setup Guide](#-setup-guide) • [Examples](#-examples) • [Support](#-support)
 
@@ -19,7 +19,7 @@
 
 ## 🎯 What is Axion Planetary MCP?
 
-Axion Planetary MCP bridges **Google Earth Engine** with **Claude Desktop**, enabling you to analyze satellite imagery, monitor environmental changes, and perform complex geospatial analysis using simple natural language commands.
+Axion Planetary MCP bridges **Google Earth Engine** with **any MCP-compatible client** (Claude Desktop, Cursor, and more), enabling you to analyze satellite imagery, monitor environmental changes, and perform complex geospatial analysis using simple natural language commands.
 
 ### 🚀 Transform Complex Code Into Simple Conversations
 
@@ -34,7 +34,7 @@ var ndvi = collection.median().normalizedDifference(['B8', 'B4']);
 // ... more complex code ...
 ```
 
-**After:** Just ask Claude naturally
+**After:** Just ask naturally in your MCP client
 > "Calculate NDVI for San Francisco in January 2024 using Sentinel-2 imagery"
 
 ---
@@ -50,7 +50,7 @@ npm install -g axion-planetary-mcp
 # Run interactive setup wizard
 axion-mcp init
 
-# That's it! Restart Claude Desktop and start using
+# That's it! Restart your MCP client and start using
 ```
 
 ### Option 2: Custom Setup (For developers)
@@ -93,7 +93,10 @@ Clone and configure manually - see [Custom Setup Guide](#custom-setup-guide)
 
 ### Prerequisites
 
-1. **Claude Desktop** - [Download here](https://claude.ai/download)
+1. **MCP-Compatible Client** - Choose one:
+   - [Claude Desktop](https://claude.ai/download) - Anthropic's AI assistant
+   - [Cursor](https://cursor.sh/) - AI-powered code editor
+   - Any other [MCP-compatible client](https://modelcontextprotocol.io/)
 2. **Node.js 18+** - [Download here](https://nodejs.org/)
 3. **Google Cloud Account** - [Free tier available](https://cloud.google.com/free)
 
@@ -158,14 +161,14 @@ axion-mcp init
 
 The wizard will:
 - ✅ Guide you through credential setup
-- ✅ Configure Claude Desktop automatically
+- ✅ Configure your MCP client automatically
 - ✅ Test Earth Engine connection
 - ✅ Provide usage examples
 
 ### ✨ Step 4: Start Using!
 
-1. **Restart Claude Desktop**
-2. You'll see the MCP indicator in Claude
+1. **Restart your MCP client** (Claude Desktop, Cursor, etc.)
+2. Look for the MCP indicator in your client
 3. Start with a simple query:
    > "Use Earth Engine to show me current vegetation health in California"
 
@@ -241,8 +244,14 @@ npm run build
 npm run build:next
 ```
 
-### 5. Configure Claude Desktop
-Edit `%APPDATA%\Claude\claude_desktop_config.json`:
+### 5. Configure Your MCP Client
+
+**For Claude Desktop:**
+Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/Library/Application Support/Claude/claude_desktop_config.json` (Mac):
+
+**For Cursor:**
+Edit `.cursor/mcp/config.json` in your project directory:
+
 ```json
 {
   "mcpServers": {
@@ -289,11 +298,13 @@ npm run test
 <details>
 <summary><b>Common Issues and Solutions</b></summary>
 
-### Claude doesn't see the MCP
-1. Ensure Claude Desktop is completely closed
+### MCP client doesn't see the server
+1. Ensure your MCP client is completely closed
 2. Run `axion-mcp status` to check configuration
-3. Restart Claude Desktop
-4. Check logs in `%APPDATA%\Claude\logs\`
+3. Restart your MCP client
+4. Check logs:
+   - Claude Desktop: `%APPDATA%\Claude\logs\` (Windows) or `~/Library/Logs/Claude/` (Mac)
+   - Cursor: Check the Output panel in the editor
 
 ### Earth Engine authentication fails
 1. Verify service account has Earth Engine access
