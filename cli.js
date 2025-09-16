@@ -389,8 +389,8 @@ class AxionPlanetaryCLI {
     
     // Generate the configuration
     const npmPath = process.platform === 'win32' 
-      ? join(process.env.APPDATA, 'npm', 'node_modules', 'axion-planetary-mcp', 'dist', 'index.mjs')
-      : '/usr/local/lib/node_modules/axion-planetary-mcp/dist/index.mjs';
+      ? join(process.env.APPDATA, 'npm', 'node_modules', 'axion-planetary-mcp', 'src', 'index.js')
+      : '/usr/local/lib/node_modules/axion-planetary-mcp/src/index.js';
     
     const config = {
       "mcpServers": {

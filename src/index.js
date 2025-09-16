@@ -24,7 +24,11 @@ const __dirname = path.dirname(__filename);
 let models;
 try {
   const modelsPath = path.join(__dirname, 'models', 'calibrated-geospatial-models.cjs');
-  models = await import(modelsPath);
+  // Convert Windows path to file URL for ESM import
+  const modelUrl = process.platform === 'win32' 
+    ? 'file:///' + modelsPath.replace(/\\/g, '/')
+    : modelsPath;
+  models = await import(modelUrl);
 } catch (error) {
   console.error('Failed to load models:', error);
   process.exit(1);
