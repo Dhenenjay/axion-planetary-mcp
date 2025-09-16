@@ -1,6 +1,6 @@
 {
   "name": "axion-planetary-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "🌍 Transform Claude Desktop into a Geospatial Analysis Powerhouse with Google Earth Engine",
   "private": false,
   "type": "module",
