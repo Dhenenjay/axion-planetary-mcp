@@ -193,12 +193,10 @@ function showNextJsInstructions(packageRoot) {
   if (process.platform === 'win32') {
     log('  Windows (PowerShell):', 'yellow');
     log(`    cd "${packageRoot}"`, 'bright');
-    log('    npm run build:next', 'bright');
     log('    npm run start:next', 'bright');
   } else {
     log('  Mac/Linux:', 'yellow');
     log(`    cd "${packageRoot}"`, 'bright');
-    log('    npm run build:next', 'bright');
     log('    npm run start:next', 'bright');
   }
   
@@ -414,7 +412,7 @@ async function main() {
   console.log();
   success('1. Start Next.js server (REQUIRED):');
   log(`     cd "${packageRoot}"`, 'cyan');
-  log('     npm run build:next && npm run start:next', 'cyan');
+  log('     npm run start:next', 'cyan');
   console.log();
   success('2. Configure your MCP client with the JSON above');
   console.log();
