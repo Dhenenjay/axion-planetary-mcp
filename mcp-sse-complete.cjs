@@ -500,7 +500,7 @@ async function handleMessage(message) {
           resources: {}
         },
         serverInfo: {
-          name: 'earth-engine-mcp',
+          name: 'Planetary MCP',
           version: '1.0.0'
         }
       });
