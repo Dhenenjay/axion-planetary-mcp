@@ -1,7 +1,7 @@
 {
   "name": "axion-planetary-mcp",
-  "version": "1.1.5",
-  "description": "🌍 Transform any MCP client into a Geospatial Analysis Powerhouse with Google Earth Engine",
+  "version": "1.2.0",
+  "description": "🌍 The Foundation for Democratizing Geospatial AI Agents - Transform PhD-level Earth observation into natural conversation",
   "private": false,
   "type": "module",
   "main": "mcp-sse-complete.cjs",
@@ -32,6 +32,9 @@
     "LICENSE"
   ],
   "keywords": [
+    "geospatial-ai",
+    "ai-agents",
+    "earth-observation",
     "mcp",
     "claude",
     "claude-desktop",
@@ -42,7 +45,13 @@
     "remote-sensing",
     "gis",
     "ndvi",
-    "model-context-protocol"
+    "model-context-protocol",
+    "democratization",
+    "foundation",
+    "revolution",
+    "climate-action",
+    "precision-agriculture",
+    "disaster-response"
   ],
   "author": "Dhenenjay",
   "license": "MIT",
