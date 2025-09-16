@@ -1,12 +1,13 @@
 {
   "name": "axion-planetary-mcp",
-  "version": "1.0.3",
-  "description": "🌍 Transform Claude Desktop into a Geospatial Analysis Powerhouse with Google Earth Engine",
+  "version": "1.1.0",
+  "description": "🌍 Transform any MCP client into a Geospatial Analysis Powerhouse with Google Earth Engine",
   "private": false,
   "type": "module",
-  "main": "dist/index.mjs",
+  "main": "mcp-sse-complete.cjs",
   "bin": {
-    "axion-mcp": "./cli.js"
+    "axion-mcp": "./cli.js",
+    "axion-setup": "./cli.js"
   },
   "files": [
     "dist/",
@@ -16,9 +17,17 @@
     "public/",
     "styles/",
     "src/",
+    "models/",
     "cli.js",
+    "mcp-sse-complete.cjs",
+    "mcp-geospatial-pro.cjs",
+    "mcp-consolidated.cjs",
+    "mcp-all-tools.cjs",
+    "mcp-ultimate.cjs",
     "next.config.ts",
     "tsconfig.json",
+    "postcss.config.mjs",
+    "tailwind.config.ts",
     "README.md",
     "LICENSE"
   ],

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "earth-engine-consolidated": {
+      "command": "node",
+      "args": ["C:\\Users\\Dhenenjay\\axion-planetary-mcp\\mcp-consolidated.cjs"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Dhenenjay\\ai-superconnector\\google-ee-key.json",
+        "GCP_PROJECT_ID": "stoked-flame-455410-k2",
+        "GCS_BUCKET": "earth-engine-exports-stoked-flame-455410-k2"
+      }
+    }
+  }
+}

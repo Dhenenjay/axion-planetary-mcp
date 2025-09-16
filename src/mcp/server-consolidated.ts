@@ -41,7 +41,7 @@ export async function buildConsolidatedServer() {
   );
   
   // Register tools handler
-  server.setRequestHandler('tools/list', async () => {
+  server.setRequestHandler({ method: 'tools/list' } as any, async () => {
     const toolList = list();
     console.error(`[MCP] Serving ${toolList.length} consolidated tools`);
     
@@ -54,7 +54,7 @@ export async function buildConsolidatedServer() {
   });
   
   // Register tool call handler
-  server.setRequestHandler('tools/call', async (request) => {
+  server.setRequestHandler({ method: 'tools/call' } as any, async (request: any) => {
     const { name, arguments: args } = request.params;
     console.error(`[MCP] Tool called: ${name}`);
     
@@ -126,13 +126,8 @@ async function main() {
   }
 }
 
-// Run if this is the main module
-if (require.main === module) {
-  main().catch((error) => {
-    console.error('[MCP] Fatal error:', error);
-    process.exit(1);
-  });
-}
+// Export main for external use
+export { main };
 
 // Helper function for external use
 export async function callTool(name: string, args: any) {
