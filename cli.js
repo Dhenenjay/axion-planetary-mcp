@@ -360,7 +360,7 @@ async function main() {
     ║                                                          ║
     ║       🌍  AXION PLANETARY MCP - SETUP WIZARD  🛸       ║
     ║                                                          ║
-    ║      Transform Claude into a Geospatial Powerhouse      ║
+    ║    Turn your MCP Client into a Geospatial Powerhouse    ║
     ║                                                          ║
     ╚══════════════════════════════════════════════════════════╝
   `, 'cyan');
