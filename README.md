@@ -1,82 +1,228 @@
+<div align="center">
+
 # 🌍 Axion Planetary MCP
 
-Transform any **MCP client** into a **Geospatial Analysis Powerhouse** with Google Earth Engine integration!
+<img src="https://img.shields.io/npm/v/axion-planetary-mcp?style=for-the-badge&color=blue" alt="npm version" />
+<img src="https://img.shields.io/npm/dm/axion-planetary-mcp?style=for-the-badge&color=green" alt="downloads" />
+<img src="https://img.shields.io/github/license/Dhenenjay/axion-planetary-mcp?style=for-the-badge&color=orange" alt="license" />
+<img src="https://img.shields.io/badge/MCP-Compatible-purple?style=for-the-badge" alt="mcp compatible" />
 
-## ✨ What This Does
+**Transform any MCP client into a Geospatial Analysis Powerhouse** 🚀
 
-This package gives MCP clients access to:
-- 🛰️ **Google Earth Engine** - Petabytes of satellite imagery and geospatial datasets
-- 🗺️ **Interactive Maps** - Visualize results directly in Claude's responses  
-- 🌾 **Crop Classification** - ML-powered agricultural analysis with automatic augmentation
-- 📊 **30+ Analysis Tools** - NDVI, water stress, urban expansion, disaster monitoring
-- 🤖 **5 Geospatial Models** - Pre-trained models for wildfire, flood, agriculture, deforestation, water quality
+Access **petabytes of satellite imagery** • Perform **advanced Earth observation** • Create **interactive maps** • Run **ML-powered analysis**
 
-## 🏗️ Architecture
+[Installation](#-quick-install) • [Earth Engine Setup](#-google-earth-engine-setup-required) • [Features](#-features) • [Usage](#-usage-examples) • [Support](#-support)
 
-```
-MCP Client ←→ stdio ←→ mcp-sse-complete.cjs ←→ SSE/HTTP ←→ Next.js API (port 3000)
-                                                                   ↓
-                                                         Earth Engine Backend
-```
+</div>
 
-**Important**: The MCP server (`mcp-sse-complete.cjs`) acts as a bridge between the MCP client's stdio interface and the Next.js backend API. The Next.js server MUST be running for the MCP server to work!
+---
 
-## 🚀 Quick Setup (5 Minutes)
+## 🎯 What is This?
 
-### Prerequisites
+**Axion Planetary MCP** bridges the gap between AI assistants and Earth observation capabilities. It gives any MCP-compatible client (Claude Desktop, Cline, etc.) direct access to Google Earth Engine's massive satellite data catalog and analysis capabilities.
 
-- **Node.js 18+** installed
-- **Google Cloud Account** with Earth Engine API enabled
-- **MCP-compatible client** (Claude Desktop, Cline, etc.)
+### 🌟 Key Capabilities
 
-### Step 1: Install Package
+| Feature | Description |
+|---------|-------------|
+| **🛰️ Satellite Data Access** | Direct access to Landsat, Sentinel, MODIS, and 100+ other satellite datasets |
+| **📊 30+ Analysis Tools** | NDVI, water stress, urban expansion, disaster monitoring, and more |
+| **🗺️ Interactive Maps** | Generate web-based interactive maps with your analysis results |
+| **🤖 5 Pre-trained Models** | Wildfire risk, flood prediction, agriculture health, deforestation, water quality |
+| **🌾 Smart Crop Classification** | ML-powered crop identification with automatic urban/water/vegetation detection |
+| **⚡ Real-time Processing** | Process live satellite data on-demand |
+| **📦 Export Capabilities** | Export results as GeoTIFF, create animations, generate reports |
+
+## 📋 Prerequisites
+
+Before installation, ensure you have:
+
+- ✅ **Node.js 18+** installed ([Download here](https://nodejs.org/))
+- ✅ **Google Cloud Account** (free tier works)
+- ✅ **MCP-compatible Client** (Claude Desktop, Cline, etc.)
+- ✅ **4GB RAM** minimum (8GB recommended)
+- ✅ **2GB free disk space**
+
+## ⚡ Installation
+
+### Option 1: Global Installation (Recommended)
+
+Install globally to use the `axion-mcp` CLI command from anywhere:
 
 ```bash
-npm install -g axion-planetary-mcp
+npm install -g axion-planetary-mcp@latest
 ```
 
-### Step 2: Set Up Earth Engine Credentials
+Or with yarn:
+```bash
+yarn global add axion-planetary-mcp@latest
+```
+
+### Option 2: Local Installation
+
+For project-specific installation:
+
+```bash
+npm install axion-planetary-mcp@latest
+```
+
+### Verify Installation
+
+After installation, verify it worked:
+
+```bash
+# For global installation
+axion-mcp --version
+
+# Check where it's installed
+npm list -g axion-planetary-mcp
+```
+
+### Update to Latest Version
+
+```bash
+npm update -g axion-planetary-mcp
+```
+
+## 🔑 Google Earth Engine Setup (REQUIRED)
+
+### Step 1: Create Google Cloud Project
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create/select a project and enable **Earth Engine API**
-3. Create a service account and download the JSON key
-4. Save to: `~/.config/earthengine/credentials.json`
+2. Click **"Create Project"** or select existing project
+3. Give it a name (e.g., "earth-engine-mcp")
+4. Note your **Project ID** - you'll need this
 
-Or set environment variable:
-```bash
-# Windows
-set GOOGLE_APPLICATION_CREDENTIALS=C:\Users\YourName\.config\earthengine\credentials.json
+### Step 2: Enable Required APIs
 
-# Mac/Linux
-export GOOGLE_APPLICATION_CREDENTIALS=~/.config/earthengine/credentials.json
+In your Google Cloud project, enable these APIs:
+
+1. Go to **APIs & Services** → **Enable APIs and Services**
+2. Search and enable:
+   - ✅ **Earth Engine API** (CRITICAL!)
+   - ✅ **Cloud Storage API** (for exports)
+   - ✅ **Cloud Resource Manager API**
+
+### Step 3: Create Service Account
+
+1. Go to **IAM & Admin** → **Service Accounts**
+2. Click **"+ CREATE SERVICE ACCOUNT"**
+3. Fill in:
+   - **Name**: `earth-engine-sa`
+   - **ID**: (auto-generated)
+   - **Description**: "Service account for Earth Engine MCP"
+4. Click **"CREATE AND CONTINUE"**
+
+### Step 4: Assign IAM Roles
+
+Add these EXACT roles to your service account:
+
+| Role | Why It's Needed |
+|------|-----------------|
+| **Earth Engine Resource Admin (Beta)** | Full access to Earth Engine resources |
+| **Earth Engine Resource Viewer (Beta)** | Read access to Earth Engine datasets |
+| **Service Usage Consumer** | Use Google Cloud services |
+| **Storage Admin** | Manage exports to Cloud Storage |
+| **Storage Object Creator** | Create export files |
+
+**How to add roles:**
+1. In the "Grant this service account access" section
+2. Click **"Add Role"**
+3. Search for each role above and add it
+4. Click **"CONTINUE"** then **"DONE"**
+
+### Step 5: Generate JSON Key
+
+1. Click on your newly created service account
+2. Go to **"Keys"** tab
+3. Click **"ADD KEY"** → **"Create new key"**
+4. Choose **JSON** format
+5. Click **"CREATE"** - file downloads automatically
+6. **SAVE THIS FILE SECURELY!** You'll need it for authentication
+
+### Step 6: Register for Earth Engine
+
+1. Go to [Earth Engine Sign Up](https://signup.earthengine.google.com/)
+2. Select **"Use with a Cloud Project"**
+3. Enter your **Project ID** from Step 1
+4. Complete the registration
+
+### Step 7: Register Your Service Account with Earth Engine
+
+**CRITICAL STEP**: Your service account must be registered with Earth Engine to access data!
+
+1. Go to [Earth Engine Service Accounts](https://code.earthengine.google.com/register)
+2. Click **"Register a service account"**
+3. Enter your service account email (format: `earth-engine-sa@YOUR-PROJECT-ID.iam.gserviceaccount.com`)
+4. Click **"Register"**
+5. Wait for confirmation (usually instant)
+
+**To find your service account email:**
+- Go to [Google Cloud Console](https://console.cloud.google.com/)
+- Navigate to **IAM & Admin** → **Service Accounts**
+- Copy the email address of your `earth-engine-sa` account
+
+### Step 8: Save Credentials
+
+Save your JSON key file to one of these locations:
+
+**Windows:**
+```powershell
+# Create directory if it doesn't exist
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.config\earthengine"
+
+# Copy your key file there
+Copy-Item "C:\Downloads\your-key-file.json" "$env:USERPROFILE\.config\earthengine\credentials.json"
 ```
 
-### Step 3: Run Setup Wizard
+**Mac/Linux:**
+```bash
+# Create directory if it doesn't exist
+mkdir -p ~/.config/earthengine
+
+# Copy your key file there
+cp ~/Downloads/your-key-file.json ~/.config/earthengine/credentials.json
+```
+
+**Alternative:** Set environment variable
+```bash
+# Windows
+set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\your\credentials.json
+
+# Mac/Linux
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json
+```
+
+## 🚀 Complete Setup Guide
+
+### 1️⃣ Run Setup Wizard
+
+After installing the package, run:
 
 ```bash
 axion-mcp
 ```
 
-This will:
-- Check Earth Engine credentials
-- Generate MCP configuration for your MCP client
-- Show Next.js server startup instructions
+This wizard will:
+- ✅ Check your Earth Engine credentials
+- ✅ Generate MCP configuration
+- ✅ Provide exact setup instructions
 
-### Step 4: Start the Next.js Backend (CRITICAL!)
+### 2️⃣ Start the Next.js Backend (CRITICAL!)
 
-**⚠️ IMPORTANT: Open a NEW terminal and keep it running!**
+The MCP server requires a Next.js backend to be running. 
+
+**Open a NEW terminal window** and run:
 
 ```bash
-# Navigate to package directory (path shown by setup wizard)
-# Example paths:
-# Windows: C:\Users\YourName\AppData\Roaming\npm\node_modules\axion-planetary-mcp
-# Mac: /usr/local/lib/node_modules/axion-planetary-mcp
-# Linux: ~/.npm-global/lib/node_modules/axion-planetary-mcp
+# Navigate to the package directory (path shown by setup wizard)
+# Windows example:
+cd C:\Users\[YourUsername]\AppData\Roaming\npm\node_modules\axion-planetary-mcp
 
-cd [package-directory-from-wizard]
+# Mac example:
+cd /usr/local/lib/node_modules/axion-planetary-mcp
 
-# Build and start Next.js server
-npm run build:next
+# Start the server
 npm run start:next
 ```
 
@@ -87,18 +233,21 @@ You should see:
 ✓ Ready
 ```
 
-**Keep this terminal open while using your MCP client!**
+**⚠️ IMPORTANT: Keep this terminal window open while using the MCP client!**
 
-### Step 5: Configure Your MCP Client
+### 3️⃣ Configure Your MCP Client
 
-Add the configuration from the wizard to your MCP client config file:
+The setup wizard shows you a JSON configuration. Add it to your MCP client's config file:
 
-**Claude Desktop (Windows)**: `%APPDATA%\Claude\claude_desktop_config.json`  
-**Claude Desktop (Mac)**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
-**Claude Desktop (Linux)**: `~/.config/claude/claude_desktop_config.json`  
-**Other MCP Clients**: Check your client's documentation for config location
+**Claude Desktop Config Locations:**
 
-Example configuration:
+| OS | Config File Location |
+|----|---------------------|
+| **Windows** | `%APPDATA%\Claude\claude_desktop_config.json` |
+| **Mac** | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| **Linux** | `~/.config/claude/claude_desktop_config.json` |
+
+**Example Configuration:**
 ```json
 {
   "mcpServers": {
@@ -113,219 +262,267 @@ Example configuration:
 }
 ```
 
-### Step 6: Restart Your MCP Client
+### 4️⃣ Restart Your MCP Client
 
 Completely quit and restart your MCP client to load the new configuration.
 
-### Step 7: Test Connection
+### 5️⃣ Test It!
 
 Ask your MCP client:
-- "Show me NDVI for California farmland"
-- "Create a crop classification for Iowa with map visualization"
-- "Analyze urban heat islands in Phoenix"
+- "Show me current NDVI for California farmland"
+- "Create a crop classification map for Iowa"
+- "Analyze urban heat islands in Los Angeles"
 
-## 📚 Available Tools
+## ✨ Features
 
-### Consolidated Super Tools
+### 🛠️ Core Tools
 
-1. **earth_engine_data** - Data discovery and access
-   - Search datasets
-   - Filter by date/region
-   - Get geometry info
-   - Access boundaries
+#### 1. **Data Discovery & Access** (`earth_engine_data`)
+- Search satellite datasets
+- Filter by date, location, cloud cover
+- Access dataset metadata
+- Get region boundaries
 
-2. **earth_engine_process** - Processing and analysis
-   - Calculate indices (NDVI, EVI, SAVI, etc.)
-   - Create composites
-   - Terrain analysis
-   - Statistical analysis
+#### 2. **Processing & Analysis** (`earth_engine_process`)
+- Calculate vegetation indices (NDVI, EVI, SAVI, etc.)
+- Create cloud-free composites
+- Perform terrain analysis
+- Generate statistics and time series
 
-3. **earth_engine_export** - Export and visualization
-   - Export to GeoTIFF
-   - Generate thumbnails
-   - Create map tiles
-   - Download results
+#### 3. **Export & Visualization** (`earth_engine_export`)
+- Export to GeoTIFF format
+- Generate thumbnails
+- Create map tiles
+- Track export status
 
-4. **earth_engine_system** - System operations
-   - Check authentication
-   - Execute custom code
-   - System health status
+#### 4. **Interactive Maps** (`earth_engine_map`)
+- Create web-based interactive maps
+- Visualize large regions
+- Multiple layer support
+- Share results via URL
 
-5. **earth_engine_map** - Interactive maps
-   - Create web maps
-   - Visualize large regions
-   - Share results
+#### 5. **System Operations** (`earth_engine_system`)
+- Check authentication status
+- Execute custom Earth Engine code
+- Monitor system health
 
-### Specialized Tools
+### 🤖 Pre-trained Models
 
-- **crop_classification** - Advanced ML crop classification with automatic urban/water/vegetation augmentation
-- **water_stress_analysis** - Agricultural water stress monitoring
-- **land_cover_classification** - Custom land cover mapping
-- **change_detection** - Monitor environmental changes
-- **fire_detection** - Wildfire monitoring and analysis
+| Model | Use Case | Example |
+|-------|----------|---------|
+| **🔥 Wildfire Risk** | Assess fire danger zones | "Analyze wildfire risk in California" |
+| **💧 Flood Prediction** | Identify flood-prone areas | "Show flood risk for Houston" |
+| **🌾 Agriculture Health** | Monitor crop conditions | "Check crop health in Iowa farmland" |
+| **🌲 Deforestation** | Detect forest loss | "Monitor Amazon deforestation since 2020" |
+| **🏊 Water Quality** | Analyze water bodies | "Assess water quality in Lake Tahoe" |
 
-### Geospatial Models
+### 🌾 Advanced Crop Classification
 
-- **wildfire_risk** - Predict wildfire risk areas
-- **flood_prediction** - Flood susceptibility mapping  
-- **agriculture_health** - Crop health assessment
-- **deforestation_detection** - Forest loss monitoring
-- **water_quality** - Water body quality analysis
+The crop classification tool includes:
+- **Automatic augmentation** with urban, water, and vegetation classes
+- **Pre-configured training data** for major US states
+- **Multiple classifiers**: Random Forest, SVM, CART, Naive Bayes
+- **Interactive result maps**
 
-## 🎯 Usage Examples
+Supported regions with built-in training data:
+- Iowa (corn, soybean)
+- California (almonds, grapes, citrus, rice)
+- Texas (cotton, wheat, sorghum)
+- Kansas (wheat, corn, sorghum, soybean)
+- Nebraska (corn, soybean, wheat)
+- Illinois (corn, soybean, wheat)
 
-### Vegetation Analysis
+## 📚 Usage Examples
+
+### Basic Vegetation Analysis
 ```
-"Calculate NDVI for Iowa farmland in summer 2024"
-"Show me vegetation stress in California during the drought"
-"Analyze forest health in the Pacific Northwest"
+"Calculate NDVI for Central Valley California in summer 2024"
+"Show me vegetation health changes in the Amazon over the last year"
+"Analyze drought impact on Texas grasslands"
 ```
 
-### Crop Classification
+### Crop Classification & Agriculture
 ```
-"Create a crop classification model for Nebraska"
-"Identify corn vs soybean fields in Illinois"
-"Map agricultural land use changes in Texas over 5 years"
+"Create a crop classification map for Iowa with corn and soybean identification"
+"Identify irrigated vs non-irrigated fields in Nebraska"
+"Monitor crop growth stages in Kansas wheat fields"
+```
+
+### Urban & Environmental Monitoring
+```
+"Track urban expansion in Phoenix from 2015 to 2024"
+"Identify heat islands in New York City"
+"Monitor construction progress in developing areas of Austin"
 ```
 
 ### Water Resources
 ```
-"Monitor Lake Mead water levels over the past decade"
-"Analyze coastal erosion in Miami Beach"
-"Detect irrigation patterns in Central Valley"
-```
-
-### Urban Analysis
-```
-"Track urban sprawl in Phoenix from 2015 to 2024"
-"Identify heat islands in Los Angeles"
-"Monitor construction progress in Austin"
+"Analyze water level changes in Lake Mead over the past decade"
+"Detect algae blooms in the Great Lakes"
+"Monitor coastal erosion in Miami Beach"
 ```
 
 ### Disaster Response
 ```
-"Assess wildfire damage in Maui"
-"Monitor flooding after Hurricane Ian"
-"Evaluate drought impact on Midwest agriculture"
+"Assess wildfire damage in recent California fires"
+"Map flood extent after Hurricane Ian"
+"Evaluate earthquake damage using before/after imagery"
 ```
+
+### Custom Analysis
+```
+"Create a time series animation of Las Vegas growth since 2000"
+"Export NDVI data for my farm coordinates as GeoTIFF"
+"Generate a false color composite highlighting vegetation stress"
+```
+
+## 🎓 Understanding the Architecture
+
+```
+┌─────────────────┐
+│   MCP Client    │  (Claude Desktop, Cline, etc.)
+└────────┬────────┘
+         │ stdio/JSON-RPC
+         ▼
+┌─────────────────┐
+│  MCP SSE Bridge │  (mcp-sse-complete.cjs)
+└────────┬────────┘
+         │ HTTP/SSE
+         ▼
+┌─────────────────┐
+│  Next.js API    │  (localhost:3000/api/mcp/sse)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Earth Engine   │  (Processing & Analysis)
+└─────────────────┘
+```
+
+The system uses a bridge architecture where:
+1. MCP client communicates via stdio/JSON-RPC
+2. Bridge converts to HTTP/Server-Sent Events
+3. Next.js backend handles Earth Engine operations
+4. Results flow back through the same pipeline
 
 ## 🔧 Troubleshooting
 
-### "MCP server not responding" in MCP client
+### "MCP server not responding"
 
-1. **Check Next.js server is running**
-   - Open http://localhost:3000 in browser
-   - Should see the application interface
-   - If not, restart with `npm run start:next`
+**Solution:**
+1. ✅ Ensure Next.js server is running in separate terminal
+2. ✅ Check http://localhost:3000 is accessible
+3. ✅ Restart your MCP client
+4. ✅ Verify config file path uses forward slashes (/)
 
-2. **Verify configuration path**
-   - Ensure the path in claude_desktop_config.json points to mcp-sse-complete.cjs
-   - Use forward slashes (/) even on Windows
+### "Earth Engine authentication failed"
 
-3. **Restart MCP client**
-   - Completely quit (not just close)
-   - Reopen after config changes
+**Solution:**
+1. ✅ Verify credentials.json exists and is valid JSON
+2. ✅ Confirm all 5 IAM roles are assigned to service account
+3. ✅ Check Earth Engine API is enabled in Google Cloud
+4. ✅ Ensure you've registered for Earth Engine with your project
+5. ✅ **CRITICAL**: Verify service account is registered at https://code.earthengine.google.com/register
 
-### Earth Engine Authentication Errors
+### "Request failed" errors
 
-1. **Check credentials file**
-   ```bash
-   # Verify file exists and is valid JSON
-   cat ~/.config/earthengine/credentials.json
-   ```
+**Solution:**
+1. ✅ Next.js server MUST be running (npm run start:next)
+2. ✅ Port 3000 must be free
+3. ✅ Check Windows Firewall isn't blocking port 3000
 
-2. **Verify API is enabled**
-   - Go to Google Cloud Console
-   - Check Earth Engine API is enabled
-   - Ensure service account has permissions
+### Maps not displaying
 
-### Maps Not Displaying
+**Solution:**
+1. ✅ Explicitly request map creation: "create a map showing..."
+2. ✅ Visit http://localhost:3000 to verify server is running
+3. ✅ Check browser console for errors
 
-1. **Confirm Next.js is running**
-   - Check http://localhost:3000
-   - Look for console errors
+### Port 3000 already in use
 
-2. **Request visualization explicitly**
-   - Say "create a map" or "show visualization"
-   - Maps are generated on request for performance
-
-### Port 3000 Already in Use
-
+**Solution:**
 ```bash
-# Use a different port
-PORT=3001 npm run start:next
+# Use different port
+$env:PORT=3001; npm run start:next  # Windows
+PORT=3001 npm run start:next         # Mac/Linux
 ```
 
-Note: Currently the SSE endpoint is hardcoded to port 3000. If you need a different port, you'll need to modify the SSE_ENDPOINT in mcp-sse-complete.cjs.
+### Installation issues
 
-## 🏆 Advanced Features
+**Solution:**
+1. ✅ Use Node.js 18 or higher: `node --version`
+2. ✅ Clear npm cache: `npm cache clean --force`
+3. ✅ Run as Administrator (Windows)
+4. ✅ Try without `-g`: `npm install axion-planetary-mcp`
 
-### Crop Classification with Auto-Augmentation
+## 🌟 Pro Tips
 
-The crop classification tool automatically adds common sense classes (urban, water, natural vegetation) to training data if missing. This ensures more accurate classifications by distinguishing crops from:
-- Urban/built-up areas
-- Water bodies (lakes, rivers)
-- Natural vegetation (forests, grasslands)
+### Optimize Performance
+- Use `scale` parameter for faster processing (higher number = lower resolution)
+- Filter by cloud cover for cleaner imagery
+- Specify date ranges to limit data processing
 
-### Custom Training Data
+### Better Results
+- Request "cloud-free composite" for clearer images
+- Use "median composite" to reduce noise
+- Add "with interactive map" to get visual results
 
-You can provide custom training points:
-```javascript
-{
-  "trainingData": [
-    {"lat": 41.5868, "lon": -93.6250, "label": 1, "class_name": "corn"},
-    {"lat": 41.6912, "lon": -93.0519, "label": 2, "class_name": "soybean"}
-  ]
-}
-```
+### Advanced Features
+- Chain operations: "Calculate NDVI, then create a map"
+- Export results: "Export the analysis as GeoTIFF"
+- Time series: "Show monthly changes over 2024"
 
-### Time Series Analysis
+## 📊 Available Datasets
 
-Request temporal analysis:
-```
-"Show me NDVI changes for this region over the growing season"
-"Create a time series animation of urban growth"
-```
+Popular datasets you can access:
 
-## 📦 Package Contents
+| Dataset | Description | Best For |
+|---------|-------------|----------|
+| **Sentinel-2** | 10m resolution, 5-day revisit | Detailed land analysis |
+| **Landsat 8/9** | 30m resolution, 16-day revisit | Long-term monitoring |
+| **MODIS** | Daily imagery, 250m-1km resolution | Large area analysis |
+| **Sentinel-1** | Radar imagery, works through clouds | Flood detection |
+| **NAIP** | 1m resolution aerial imagery (US only) | High-detail mapping |
 
-```
-axion-planetary-mcp/
-├── mcp-sse-complete.cjs    # Main MCP-SSE bridge server
-├── cli.js                   # Setup wizard
-├── src/                     # Source code
-│   ├── mcp/                # MCP server implementation
-│   │   └── tools/          # Earth Engine tools
-│   └── lib/                # Shared libraries
-├── app/                     # Next.js app
-│   └── api/                # API routes
-│       └── mcp/            # MCP endpoints
-│           └── sse/        # SSE endpoint
-├── models/                  # Geospatial models
-└── public/                  # Static assets
-```
+## 📈 Performance & Limits
+
+- **Processing Scale**: 10m to 1000m resolution
+- **Region Size**: Best for areas under 10,000 km²
+- **Time Range**: Data from 1972 to present
+- **Export Size**: Up to 10GB per file
+- **Rate Limits**: Respects Earth Engine quotas
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please feel free to:
+- Report bugs via [GitHub Issues](https://github.com/Dhenenjay/axion-planetary-mcp/issues)
+- Submit pull requests
+- Suggest new features
+- Improve documentation
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+MIT License - feel free to use in your projects!
+
+## 💬 Support
+
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Dhenenjay/axion-planetary-mcp/issues)
+- **Discussions**: [Ask questions and share tips](https://github.com/Dhenenjay/axion-planetary-mcp/discussions)
+- **Documentation**: [Wiki and guides](https://github.com/Dhenenjay/axion-planetary-mcp/wiki)
 
 ## 🙏 Acknowledgments
 
 - Google Earth Engine team for the amazing platform
-- Anthropic for Claude and the MCP protocol
-- The geospatial community for continued support
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/Dhenenjay/axion-planetary-mcp/issues)
-- **Documentation**: [Wiki](https://github.com/Dhenenjay/axion-planetary-mcp/wiki)
+- Anthropic for the MCP protocol
+- The open-source geospatial community
+- All contributors and users
 
 ---
 
-**Made with ❤️ for the geospatial community**
+<div align="center">
 
-*Transform Claude into your personal Earth observation assistant!*
+**Built with ❤️ for the Earth observation community**
+
+*Transform your MCP client into a window to our planet* 🌍
+
+</div>
