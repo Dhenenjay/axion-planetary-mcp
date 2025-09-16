@@ -1,0 +1,844 @@
+/**
+ * EARTH ENGINE PROCESS - Consolidated Processing Tool
+ * Combines: clip, mask, index, analyze, composite, terrain operations
+ * Critical for MCP stability - reduces tool count
+ */
+
+import ee from '@google/earthengine';
+import { z } from 'zod';
+import { register } from '../../registry';
+import { getInput as getEEInput } from '../consolidated/earth_engine_data';
+import { parseAoi } from '@/src/utils/geo';
+import { optimizer } from '@/src/utils/ee-optimizer';
+// Main schema for the consolidated tool
+const ProcessToolSchema = z.object({
+  operation: z.enum(['clip', 'mask', 'index', 'analyze', 'composite', 'terrain', 'resample']),
+  
+  // Common params
+  input: z.any(), // Can be datasetId, image, or collection
+  region: z.any().optional(),
+  scale: z.number().optional(),
+  
+  // Mask operation params
+  maskType: z.enum(['clouds', 'quality', 'water', 'shadow']).optional(),
+  threshold: z.number().optional(),
+  
+  // Index operation params
+  indexType: z.enum(['NDVI', 'NDWI', 'NDBI', 'EVI', 'SAVI', 'MNDWI', 'BSI', 'NDSI', 'NBR', 'custom']).optional(),
+  redBand: z.string().optional(),
+  nirBand: z.string().optional(),
+  formula: z.string().optional(),
+  
+  // Analyze operation params
+  analysisType: z.enum(['statistics', 'timeseries', 'change', 'zonal']).optional(),
+  reducer: z.enum(['mean', 'median', 'max', 'min', 'stdDev', 'sum', 'count']).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  zones: z.any().optional(),
+  
+  // Composite operation params
+  compositeType: z.enum(['median', 'mean', 'max', 'min', 'mosaic', 'greenest']).optional(),
+  
+  // Terrain operation params
+  terrainType: z.enum(['elevation', 'slope', 'aspect', 'hillshade']).optional(),
+  azimuth: z.number().optional(),
+  elevation: z.number().optional(),
+  
+  // Resample operation params
+  targetScale: z.number().optional(),
+  resampleMethod: z.enum(['bilinear', 'bicubic', 'nearest']).optional()
+});
+
+/**
+ * Helper function to get or create image/collection
+ */
+async function getInput(input: any) {
+  if (typeof input === 'string') {
+    // Try as collection first
+    try {
+      return new ee.ImageCollection(input);
+    } catch {
+      // Try as single image
+      return new ee.Image(input);
+    }
+  }
+  return input; // Already an EE object
+}
+
+/**
+ * Clip operation - clip images to region
+ */
+async function clipImage(params: any) {
+  const { input, datasetId, region, startDate, endDate } = params;
+  if (!region) throw new Error('region required for clip operation');
+  
+  const geometry = await parseAoi(region);
+  
+  // Get the input source - prioritize datasetId if provided
+  let source;
+  let clipped;
+  
+  if (datasetId) {
+    const collection = new ee.ImageCollection(datasetId);
+    
+    // Apply filters if provided
+    let filtered = collection;
+    if (startDate && endDate) {
+      filtered = filtered.filterDate(startDate, endDate);
+    }
+    // Filter by bounds to reduce data
+    filtered = filtered.filterBounds(geometry);
+    
+    // Create a median composite and clip it
+    source = filtered.median().clip(geometry);
+    clipped = source;
+  } else if (input) {
+    source = await getInput(input);
+    
+    let clipped;
+    if (source instanceof ee.ImageCollection) {
+      clipped = source.map((img: any) => img.clip(geometry));
+    } else {
+      clipped = source.clip(geometry);
+    }
+    return {
+      success: true,
+      operation: 'clip',
+      message: 'Image(s) clipped to region',
+      result: clipped
+    };
+  } else {
+    throw new Error('Either datasetId or input parameter is required');
+  }
+  
+  return {
+    success: true,
+    operation: 'clip',
+    message: 'Image clipped to region',
+    result: clipped,
+    datasetId: datasetId || input
+  };
+}
+
+/**
+ * Mask operation - apply various masks
+ */
+async function maskImage(params: any) {
+  const { 
+    input, 
+    datasetId,
+    maskType = 'clouds', 
+    threshold = 20,
+    startDate,
+    endDate,
+    geometry,
+    region
+  } = params;
+  
+  // Get the input source - prioritize datasetId if provided
+  let source;
+  if (datasetId) {
+    const collection = new ee.ImageCollection(datasetId);
+    
+    // Apply filters
+    let filtered = collection;
+    if (startDate && endDate) {
+      filtered = filtered.filterDate(startDate, endDate);
+    }
+    if (geometry || region) {
+      const aoi = await parseAoi(geometry || region);
+      filtered = filtered.filterBounds(aoi);
+    }
+    
+    source = filtered;
+  } else {
+    source = await getInput(input);
+  }
+  
+  let masked;
+  
+  switch (maskType) {
+    case 'clouds':
+      // Sentinel-2 cloud masking
+      if (source instanceof ee.ImageCollection) {
+        masked = source.map((img: any) => {
+          const qa = img.select('QA60');
+          const cloudBitMask = 1 << 10;
+          const cirrusBitMask = 1 << 11;
+          const mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+            .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+          return img.updateMask(mask);
+        });
+      } else {
+        const qa = source.select('QA60');
+        const cloudBitMask = 1 << 10;
+        const cirrusBitMask = 1 << 11;
+        const mask = qa.bitwiseAnd(cloudBitMask).eq(0)
+          .and(qa.bitwiseAnd(cirrusBitMask).eq(0));
+        masked = source.updateMask(mask);
+      }
+      break;
+      
+    case 'water':
+      // NDWI-based water masking
+      const ndwi = source.normalizedDifference(['B3', 'B8']);
+      const waterMask = ndwi.gt(0);
+      masked = source.updateMask(waterMask.not());
+      break;
+      
+    default:
+      masked = source;
+  }
+  
+  return {
+    success: true,
+    operation: 'mask',
+    maskType,
+    message: `Applied ${maskType} mask`,
+    result: masked
+  };
+}
+
+/**
+ * Index operation - calculate spectral indices
+ */
+async function calculateIndex(params: any) {
+  const { 
+    input, 
+    datasetId,
+    indexType = 'NDVI', 
+    redBand, 
+    nirBand, 
+    formula,
+    startDate,
+    endDate,
+    geometry,
+    region
+  } = params;
+  
+  // Get the input source - prioritize datasetId if provided
+  let source;
+  if (datasetId) {
+    const collection = new ee.ImageCollection(datasetId);
+    
+    // Apply filters
+    let filtered = collection;
+    if (startDate && endDate) {
+      filtered = filtered.filterDate(startDate, endDate);
+    }
+    if (geometry || region) {
+      const aoi = await parseAoi(geometry || region);
+      filtered = filtered.filterBounds(aoi);
+    }
+    
+    // Get first image or create composite
+    const count = await filtered.size().getInfo();
+    if (count === 0) {
+      throw new Error('No images found for the specified filters');
+    }
+    source = filtered.median(); // Use median composite for multiple images
+  } else {
+    source = await getEEInput(input);
+  }
+  
+  let index;
+  
+  // Detect dataset type and set appropriate band names
+  let bands;
+  if (datasetId && datasetId.includes('MODIS')) {
+    // MODIS band mappings
+    if (datasetId.includes('MOD13')) {
+      // MOD13 is a vegetation indices product - EVI is already computed
+      if (indexType === 'EVI' || indexType === 'NDVI') {
+        // These indices are already in the product
+        index = source.select(indexType).rename(indexType);
+        return {
+          success: true,
+          operation: 'index',
+          indexType,
+          message: `Selected pre-computed ${indexType} from MODIS product`,
+          result: index,
+          bands: [indexType]
+        };
+      }
+    }
+    // For other MODIS products, use surface reflectance bands
+    bands = {
+      red: redBand || 'sur_refl_b01',
+      nir: nirBand || 'sur_refl_b02',
+      green: 'sur_refl_b04',
+      blue: 'sur_refl_b03',
+      swir1: 'sur_refl_b06',
+      swir2: 'sur_refl_b07'
+    };
+  } else if (datasetId && datasetId.includes('LANDSAT')) {
+    // Landsat band mappings
+    bands = {
+      red: redBand || 'SR_B4',
+      nir: nirBand || 'SR_B5',
+      green: 'SR_B3',
+      blue: 'SR_B2',
+      swir1: 'SR_B6',
+      swir2: 'SR_B7'
+    };
+  } else {
+    // Default to Sentinel-2 band mappings
+    bands = {
+      red: redBand || 'B4',
+      nir: nirBand || 'B8',
+      green: 'B3',
+      blue: 'B2',
+      swir1: 'B11',
+      swir2: 'B12'
+    };
+  }
+  
+  switch (indexType) {
+    case 'NDVI':
+      index = source.normalizedDifference([bands.nir, bands.red]).rename('NDVI');
+      break;
+      
+    case 'NDWI':
+      index = source.normalizedDifference([bands.green, bands.nir]).rename('NDWI');
+      break;
+      
+    case 'NDBI':
+      index = source.normalizedDifference([bands.swir1, bands.nir]).rename('NDBI');
+      break;
+      
+    case 'EVI':
+      index = source.expression(
+        '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))',
+        {
+          NIR: source.select(bands.nir),
+          RED: source.select(bands.red),
+          BLUE: source.select(bands.blue)
+        }
+      ).rename('EVI');
+      break;
+      
+    case 'SAVI':
+      const L = 0.5; // Soil adjustment factor
+      index = source.expression(
+        '((NIR - RED) / (NIR + RED + L)) * (1 + L)',
+        {
+          NIR: source.select(bands.nir),
+          RED: source.select(bands.red),
+          L: L
+        }
+      ).rename('SAVI');
+      break;
+      
+    case 'MNDWI':
+      index = source.normalizedDifference([bands.green, bands.swir1]).rename('MNDWI');
+      break;
+      
+    case 'NDSI':
+      // Normalized Difference Snow Index
+      index = source.normalizedDifference([bands.green, bands.swir1]).rename('NDSI');
+      break;
+      
+    case 'NBR':
+      // Normalized Burn Ratio
+      index = source.normalizedDifference([bands.nir, bands.swir2]).rename('NBR');
+      break;
+      
+    case 'custom':
+      if (!formula) throw new Error('formula required for custom index');
+      index = source.expression(formula);
+      break;
+      
+    default:
+      throw new Error(`Unknown index type: ${indexType}`);
+  }
+  
+  return {
+    success: true,
+    operation: 'index',
+    indexType,
+    message: `Calculated ${indexType} index`,
+    result: index,
+    bands: index instanceof ee.Image ? await index.bandNames().getInfo() : null
+  };
+}
+
+/**
+ * Analyze operation - statistical analysis, time series, change detection
+ */
+async function analyze(params: any) {
+  const { 
+    input, 
+    datasetId,
+    analysisType = 'statistics', 
+    reducer = 'mean', 
+    band,
+    geometry,
+    region, 
+    startDate, 
+    endDate, 
+    zones 
+  } = params;
+  
+  // Get source - handle datasetId
+  let source;
+  if (datasetId) {
+    source = new ee.ImageCollection(datasetId);
+    if (startDate && endDate) {
+      source = source.filterDate(startDate, endDate);
+    }
+    if (geometry || region) {
+      const aoi = await parseAoi(geometry || region);
+      source = source.filterBounds(aoi);
+    }
+  } else {
+    source = await getEEInput(input);
+  }
+  
+  let result;
+  
+  switch (analysisType) {
+    case 'statistics':
+      // Calculate statistics over region
+      const statsGeometry = region ? await parseAoi(region) : (geometry ? await parseAoi(geometry) : null);
+      const reducerObj = (ee.Reducer as any)[reducer]();
+      
+      if (source instanceof ee.ImageCollection) {
+        const composite = (source as any).reduce(reducerObj);
+        result = statsGeometry ? 
+          await composite.reduceRegion({
+            reducer: reducerObj,
+            geometry: statsGeometry,
+            scale: params.scale || 30,
+            maxPixels: 1e9
+          }).getInfo() :
+          { message: 'Statistics calculated for collection' };
+      } else {
+        result = statsGeometry ?
+          await source.reduceRegion({
+            reducer: reducerObj,
+            geometry: statsGeometry,
+            scale: params.scale || 30,
+            maxPixels: 1e9
+          }).getInfo() :
+          { message: 'Statistics calculated for image' };
+      }
+      break;
+      
+    case 'timeseries':
+      // Time series analysis
+      if (!startDate || !endDate) throw new Error('startDate and endDate required for timeseries');
+      if (!geometry && !region) throw new Error('geometry or region required for timeseries');
+      
+      let tsGeometry;
+      try {
+        tsGeometry = await parseAoi(geometry || region);
+        console.log('Parsed geometry for time series:', tsGeometry);
+      } catch (geoError: any) {
+        throw new Error(`Failed to parse geometry: ${geoError.message}`);  
+      }
+      
+      // Ensure we have a collection
+      let tsCollection;
+      if (source instanceof ee.ImageCollection) {
+        tsCollection = source;
+      } else if (source instanceof ee.Image) {
+        // Single image - create collection
+        tsCollection = new ee.ImageCollection([source]);
+      } else {
+        throw new Error('Invalid source for time series analysis');
+      }
+      
+      // Check collection size with timeout
+      let collectionSize;
+      try {
+        collectionSize = await optimizer.optimizedGetInfo(tsCollection.size(), { timeout: 5000 });
+      } catch (error: any) {
+        console.log('Could not get exact collection size, using default');
+        collectionSize = 100; // Assume reasonable size
+      }
+      if (collectionSize === 0) {
+        result = {
+          error: 'No images found in collection',
+          band: band || 'N/A',
+          reducer: reducer,
+          count: 0,
+          values: []
+        };
+        break;
+      }
+      
+      // Determine band to analyze with timeout
+      const firstImage = tsCollection.first();
+      let availableBands;
+      try {
+        availableBands = await optimizer.optimizedGetInfo(firstImage.bandNames(), { timeout: 3000 });
+      } catch (error: any) {
+        console.log('Could not get band names, using defaults');
+        // Common band names based on collection type
+        availableBands = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12'];
+      }
+      
+      let bandToAnalyze = band;
+      if (!bandToAnalyze) {
+        // Auto-select band based on available bands
+        if (availableBands.includes('B4')) {
+          bandToAnalyze = 'B4'; // Sentinel-2 red
+        } else if (availableBands.includes('SR_B4')) {
+          bandToAnalyze = 'SR_B4'; // Landsat red
+        } else if (availableBands.includes('NDVI')) {
+          bandToAnalyze = 'NDVI'; // NDVI if available
+        } else {
+          bandToAnalyze = availableBands[0]; // First available band
+        }
+      }
+      
+      // Verify band exists
+      if (!availableBands.includes(bandToAnalyze)) {
+        throw new Error(`Band '${bandToAnalyze}' not found. Available bands: ${availableBands.join(', ')}`);
+      }
+      
+      const tsReducer = (ee.Reducer as any)[reducer]();
+      
+      try {
+        // Create time series with error handling
+        const timeSeries = tsCollection.map((img: any) => {
+          // Create the reduce region params first
+          const reduceParams = {
+            reducer: tsReducer,
+            geometry: tsGeometry,
+            scale: params.scale || 30,
+            maxPixels: 1e9,
+            bestEffort: true
+          };
+          
+          // Compute the reduced values
+          const reducedValues = img.select(bandToAnalyze).reduceRegion(reduceParams);
+          
+          // Create feature with properties
+          return new ee.Feature(null)
+            .set(reducedValues)
+            .set('system:time_start', img.get('system:time_start'));
+        });
+        
+        // Limit to reasonable number and get info with timeout
+        const limitedSeries = (timeSeries as any).limit(Math.min(collectionSize, 100));
+        let features;
+        try {
+          features = await optimizer.optimizedGetInfo(limitedSeries, { timeout: 10000 });
+        } catch (error: any) {
+          console.log('Timeseries getInfo timeout, trying with smaller limit');
+          // Try with much smaller limit
+          const smallerSeries = (timeSeries as any).limit(10);
+          features = await optimizer.optimizedGetInfo(smallerSeries, { timeout: 5000 });
+        }
+        
+        // Process results
+        const values = features.features
+          .filter((f: any) => f.properties['system:time_start'] !== null)
+          .map((f: any) => {
+            const timestamp = f.properties['system:time_start'];
+            const value = f.properties[bandToAnalyze];
+            return {
+              date: timestamp ? new Date(timestamp).toISOString() : null,
+              value: value !== null && value !== undefined ? value : null
+            };
+          })
+          .filter((v: any) => v.date !== null); // Remove entries without dates
+        
+        result = {
+          band: bandToAnalyze,
+          reducer: reducer,
+          scale: params.scale || 30,
+          count: values.length,
+          totalImages: collectionSize,
+          values: values
+        };
+      } catch (tsError: any) {
+        console.error('Time series error:', tsError);
+        result = {
+          error: 'Time series analysis failed',
+          details: tsError.message || tsError,
+          band: bandToAnalyze,
+          reducer: reducer
+        };
+      }
+      break;
+      
+    case 'change':
+      // Change detection between two dates
+      if (!startDate || !endDate) throw new Error('startDate and endDate required for change detection');
+      
+      const col = source instanceof ee.ImageCollection ? 
+        source : new ee.ImageCollection([source]);
+      
+      const before = col.filterDate(startDate, new Date(new Date(startDate).getTime() + 30*24*60*60*1000).toISOString()).median();
+      const after = col.filterDate(new Date(new Date(endDate).getTime() - 30*24*60*60*1000).toISOString(), endDate).median();
+      
+      const change = after.subtract(before);
+      result = {
+        message: 'Change detection completed',
+        bands: await change.bandNames().getInfo(),
+        change: change
+      };
+      break;
+      
+    case 'zonal':
+      // Zonal statistics
+      if (!zones) throw new Error('zones required for zonal statistics');
+      
+      const zoneGeometry = await parseAoi(zones);
+      const zonalReducer = (ee.Reducer as any)[reducer]();
+      
+      result = await source.reduceRegion({
+        reducer: zonalReducer,
+        geometry: zoneGeometry,
+        scale: params.scale || 30,
+        maxPixels: 1e9
+      }).getInfo();
+      break;
+      
+    default:
+      throw new Error(`Unknown analysis type: ${analysisType}`);
+  }
+  
+  return {
+    success: true,
+    operation: 'analyze',
+    analysisType,
+    reducer,
+    result
+  };
+}
+
+/**
+ * Composite operation - create composites/mosaics
+ */
+async function createComposite(params: any) {
+  const { input, datasetId, compositeType = 'median', region, startDate, endDate } = params;
+  
+  // Get the input source - prioritize datasetId if provided
+  let source;
+  if (datasetId) {
+    source = new ee.ImageCollection(datasetId);
+  } else if (input) {
+    source = await getInput(input);
+  } else {
+    throw new Error('Either datasetId or input parameter is required');
+  }
+  
+  let collection = source instanceof ee.ImageCollection ? 
+    source : new ee.ImageCollection([source]);
+    
+  // Apply filters if provided
+  if (startDate && endDate) {
+    collection = collection.filterDate(startDate, endDate);
+  }
+  if (region) {
+    const geometry = await parseAoi(region);
+    collection = collection.filterBounds(geometry);
+  }
+  
+  let composite;
+  
+  switch (compositeType) {
+    case 'median':
+      composite = collection.median();
+      break;
+    case 'mean':
+      composite = collection.mean();
+      break;
+    case 'max':
+      composite = collection.max();
+      break;
+    case 'min':
+      composite = collection.min();
+      break;
+    case 'mosaic':
+      composite = collection.mosaic();
+      break;
+    case 'greenest':
+      // Greenest pixel composite (max NDVI)
+      const withNDVI = collection.map((img: any) => {
+        const ndvi = img.normalizedDifference(['B8', 'B4']).rename('ndvi');
+        return img.addBands(ndvi);
+      });
+      composite = (withNDVI as any).qualityMosaic('ndvi');
+      break;
+    default:
+      throw new Error(`Unknown composite type: ${compositeType}`);
+  }
+  
+  // Store the composite for future reference
+  (global as any).eeComposite = composite;
+  console.log('Stored composite in global.eeComposite for future reference');
+  
+  // Get band names with timeout to prevent hanging
+  let bandNames = [];
+  try {
+    bandNames = await optimizer.optimizedGetInfo(composite.bandNames(), { timeout: 5000 });
+  } catch (error) {
+    console.log('Could not retrieve band names, using default bands');
+    // Use common band names based on likely dataset
+    if (datasetId && datasetId.includes('S2')) {
+      bandNames = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B8A', 'B9', 'B10', 'B11', 'B12'];
+    } else if (datasetId && datasetId.includes('LANDSAT')) {
+      bandNames = ['SR_B1', 'SR_B2', 'SR_B3', 'SR_B4', 'SR_B5', 'SR_B6', 'SR_B7'];
+    } else {
+      bandNames = ['band1', 'band2', 'band3'];
+    }
+  }
+  
+  return {
+    success: true,
+    operation: 'composite',
+    compositeType,
+    message: `Created ${compositeType} composite`,
+    result: composite,
+    bands: bandNames,
+    datasetId: datasetId || input
+  };
+}
+
+/**
+ * Terrain operation - elevation analysis
+ */
+async function analyzeTerrain(params: any) {
+  const { terrainType = 'elevation', azimuth = 270, elevation = 45, region } = params;
+  
+  // Use SRTM DEM
+  const dem = new ee.Image('USGS/SRTMGL1_003');
+  let result;
+  
+  switch (terrainType) {
+    case 'elevation':
+      result = dem.select('elevation');
+      break;
+    case 'slope':
+      result = (ee.Terrain as any).slope(dem);
+      break;
+    case 'aspect':
+      result = (ee.Terrain as any).aspect(dem);
+      break;
+    case 'hillshade':
+      result = ee.Terrain.hillshade(dem, azimuth, elevation);
+      break;
+    default:
+      throw new Error(`Unknown terrain type: ${terrainType}`);
+  }
+  
+  // Clip to region if provided
+  if (region) {
+    const geometry = await parseAoi(region);
+    result = result.clip(geometry);
+  }
+  
+  return {
+    success: true,
+    operation: 'terrain',
+    terrainType,
+    message: `Generated ${terrainType} analysis`,
+    result
+  };
+}
+
+/**
+ * Resample operation - change image resolution
+ */
+async function resampleImage(params: any) {
+  const { input, targetScale = 10, resampleMethod = 'bilinear' } = params;
+  const source = await getInput(input);
+  
+  const resampled = source.resample(resampleMethod).reproject({
+    crs: source.projection(),
+    scale: targetScale
+  });
+  
+  return {
+    success: true,
+    operation: 'resample',
+    targetScale,
+    resampleMethod,
+    message: `Resampled to ${targetScale}m using ${resampleMethod}`,
+    result: resampled
+  };
+}
+
+// Register the consolidated tool
+register({
+  name: 'earth_engine_process',
+  description: `Consolidated Earth Engine processing tool. Operations: clip, mask, index (NDVI/NDWI/etc), analyze (statistics/timeseries/change), composite, terrain, resample`,
+  input: ProcessToolSchema,
+  output: z.any(),
+  handler: async (params) => {
+    try {
+      const { operation } = params;
+      
+      if (!operation) {
+        return {
+          success: false,
+          error: 'Operation parameter is required',
+          availableOperations: ['clip', 'mask', 'index', 'analyze', 'composite', 'terrain', 'resample']
+        };
+      }
+      
+      // Handle both snake_case and camelCase parameters
+      const normalizedParams = {
+        ...params,
+        datasetId: params.datasetId || params.dataset_id || params.collectionId || params.collection_id || params.collection,
+        collectionId: params.collectionId || params.collection_id || params.collection,
+        imageId: params.imageId || params.image_id,
+        startDate: params.startDate || params.start_date,
+        endDate: params.endDate || params.end_date,
+        compositeType: params.compositeType || params.composite_type,
+        terrainType: params.terrainType || params.terrain_type,
+        maskType: params.maskType || params.mask_type,
+        resamplingMethod: params.resamplingMethod || params.resampling_method,
+        indexType: params.indexType || params.index_type,
+        analysisType: params.analysisType || params.analysis_type
+      };
+      
+      switch (operation) {
+        case 'clip':
+          return await clipImage(normalizedParams);
+          
+        case 'mask':
+          return await maskImage(normalizedParams);
+          
+        case 'index':
+          return await calculateIndex(normalizedParams);
+          
+        case 'analyze':
+        case 'analysis':  // Allow both 'analyze' and 'analysis'
+          return await analyze(normalizedParams);
+          
+        case 'composite':
+          return await createComposite(normalizedParams);
+          
+        case 'terrain':
+          return await analyzeTerrain(normalizedParams);
+          
+        case 'resample':
+          return await resampleImage(normalizedParams);
+          
+        default:
+          return {
+            success: false,
+            error: `Unknown operation: ${operation}`,
+            availableOperations: ['clip', 'mask', 'index', 'analyze', 'composite', 'terrain', 'resample'],
+            suggestion: 'Please use one of the available operations'
+          };
+      }
+    } catch (error: any) {
+      console.error(`[earth_engine_process] Error in ${params.operation}:`, error);
+      return {
+        success: false,
+        operation: params.operation,
+        error: error.message || 'An unexpected error occurred',
+        details: error.stack,
+        params: params
+      };
+    }
+  }
+});
+
+export default {};

@@ -1,0 +1,135 @@
+/* Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+#__next {
+  height: 100%;
+}
+
+/* Map container styles */
+.map-container {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+/* Leaflet overrides for dark theme */
+.leaflet-container {
+  background: #1a1a1a;
+  font-family: inherit;
+}
+
+.leaflet-control-layers,
+.leaflet-bar {
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid #444;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.leaflet-control-layers-expanded {
+  color: #ccc;
+}
+
+.leaflet-control-layers label {
+  color: #ccc;
+}
+
+.leaflet-bar a {
+  background-color: rgba(30, 30, 30, 0.95);
+  border-bottom: 1px solid #444;
+  color: white;
+}
+
+.leaflet-bar a:hover {
+  background-color: rgba(76, 175, 80, 0.3);
+}
+
+.leaflet-bar a:last-child {
+  border-bottom: none;
+}
+
+/* Custom control styles */
+.custom-controls {
+  background: rgba(30, 30, 30, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid #444 !important;
+  border-radius: 4px;
+}
+
+.control-button {
+  display: block !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  color: white !important;
+  font-size: 16px !important;
+  background: transparent !important;
+  border-bottom: 1px solid #444 !important;
+  cursor: pointer;
+}
+
+.control-button:last-child {
+  border-bottom: none !important;
+}
+
+.control-button:hover {
+  background: rgba(76, 175, 80, 0.3) !important;
+}
+
+/* Loading indicator */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #1a1a1a;
+  color: #4CAF50;
+  font-size: 1.2rem;
+}
+
+/* Error container */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #1a1a1a;
+  color: #f44336;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-container h1 {
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  color: #ccc;
+  margin-bottom: 2rem;
+}
+
+.error-container a {
+  color: #4CAF50;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border: 1px solid #4CAF50;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.error-container a:hover {
+  background: #4CAF50;
+  color: white;
+}
