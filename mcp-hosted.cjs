@@ -226,6 +226,43 @@ const TOOLS = [
 // Models
 const MODELS = [
   {
+    name: 'crop_classification',
+    description: 'Comprehensive crop classification and agricultural analysis using machine learning',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        operation: {
+          type: 'string',
+          enum: ['classify', 'train', 'validate', 'analyze'],
+          description: 'Classification operation'
+        },
+        region: { type: 'string', description: 'Region for analysis (place name or GeoJSON)' },
+        year: { type: 'number', description: 'Year for analysis' },
+        startDate: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
+        endDate: { type: 'string', description: 'End date (YYYY-MM-DD)' },
+        classifier: {
+          type: 'string',
+          enum: ['randomForest', 'svm', 'cart', 'naiveBayes'],
+          description: 'ML classifier type'
+        },
+        cropTypes: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Crop types to classify'
+        },
+        includeIndices: {
+          type: 'boolean',
+          description: 'Include spectral indices in classification'
+        },
+        exportResults: {
+          type: 'boolean',
+          description: 'Export classification results'
+        }
+      },
+      required: ['operation', 'region']
+    }
+  },
+  {
     name: 'wildfire_risk_assessment',
     description: 'Assess wildfire risk using vegetation indices and terrain analysis',
     inputSchema: {

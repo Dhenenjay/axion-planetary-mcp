@@ -463,8 +463,8 @@ async function createMap(params: any) {
     // Use the global store helper
     addMapSession(mapId, session);
     
-    // Generate the map URL
-    const mapUrl = `http://localhost:3000/map/${mapId}`;
+    // Generate the map URL (use Render deployment)
+    const mapUrl = `https://axion-planetary-mcp.onrender.com/map/${mapId}`;
     
     return {
       success: true,
@@ -506,7 +506,7 @@ async function createMap(params: any) {
 async function listMaps() {
   const maps = Object.values(activeMaps).map(session => ({
     id: session.id,
-    url: `http://localhost:3000/map/${session.id}`,
+    url: `https://axion-planetary-mcp.onrender.com/map/${session.id}`,
     region: session.region,
     created: session.created.toISOString(),
     layers: session.layers.length
