@@ -414,7 +414,7 @@ async function handleMessage(message) {
         },
         serverInfo: {
           name: 'Axion Planetary MCP (Hosted)',
-          version: '1.2.4'
+          version: '1.2.5'
         }
       });
       console.error('[MCP Bridge] Initialization complete, staying alive...');
