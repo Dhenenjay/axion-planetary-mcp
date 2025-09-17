@@ -351,50 +351,28 @@ rl.on('close', () => {
 
 // Handle incoming messages from MCP client
 rl.on('line', (line) => {
-  buffer += line;
-  
-  // Try to parse complete JSON objects
-  let startIdx = 0;
-  let openBraces = 0;
-  let inString = false;
-  let escape = false;
-  
-  for (let i = 0; i < buffer.length; i++) {
-    const char = buffer[i];
+  try {
+    // Each line should be a complete JSON message
+    const message = JSON.parse(line);
+    handleMessage(message);
+  } catch (e) {
+    // If it's not valid JSON, try to buffer it
+    buffer += line;
     
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    
-    if (char === '\\') {
-      escape = true;
-      continue;
-    }
-    
-    if (char === '"' && !escape) {
-      inString = !inString;
-      continue;
-    }
-    
-    if (!inString) {
-      if (char === '{') openBraces++;
-      else if (char === '}') openBraces--;
-      
-      if (openBraces === 0 && startIdx < i) {
-        const jsonStr = buffer.substring(startIdx, i + 1);
-        try {
-          const message = JSON.parse(jsonStr);
-          handleMessage(message);
-        } catch (e) {
-          console.error('[MCP Bridge] Failed to parse message:', e);
-        }
-        startIdx = i + 1;
+    // Try to parse the buffer as complete JSON
+    try {
+      const message = JSON.parse(buffer);
+      handleMessage(message);
+      buffer = ''; // Clear buffer after successful parse
+    } catch (bufferError) {
+      // Still not valid, keep buffering
+      // But prevent buffer from growing too large
+      if (buffer.length > 100000) {
+        console.error('[MCP Bridge] Buffer too large, clearing');
+        buffer = '';
       }
     }
   }
-  
-  buffer = buffer.substring(startIdx);
 });
 
 // Handle different message types
@@ -402,6 +380,15 @@ async function handleMessage(message) {
   const { id, method, params } = message;
   
   console.error(`[MCP Bridge] Received ${method} request`);
+  
+  // Validate message structure
+  if (!method) {
+    console.error('[MCP Bridge] Invalid message: missing method');
+    if (id !== undefined) {
+      sendError(id, -32600, 'Invalid Request: missing method');
+    }
+    return;
+  }
   
   switch (method) {
     case 'initialize':
