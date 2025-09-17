@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     });
     
     // Import handlers
-    const { callTool } = await import('../../../../src/mcp/server-consolidated');
+    const { callTool } = await import('../../../../src/mcp/server-utils');
     
     // Extract tool and arguments from the MCP request format
     let toolName: string;

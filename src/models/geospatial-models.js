@@ -6,7 +6,7 @@
  */
 
 // Import consolidated tools directly
-const { callTool } = require('../mcp/server-consolidated');
+const { callTool } = require('../mcp/server-utils');
 
 // Helper function for Earth Engine API calls
 async function callEarthEngine(tool, args) {

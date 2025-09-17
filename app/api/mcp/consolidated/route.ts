@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { callTool } from '../../../../src/mcp/server-consolidated';
+import { callTool } from '../../../../src/mcp/server-utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
