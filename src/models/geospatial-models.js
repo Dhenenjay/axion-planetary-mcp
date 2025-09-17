@@ -625,14 +625,36 @@ async function agriculturalMonitoring(options = {}) {
  * @returns {Object} Deforestation analysis results
  */
 async function deforestationDetection(options = {}) {
+    // Handle both year format and date range format
+    let baselineStart, baselineEnd, currentStart, currentEnd;
+    
+    if (options.baselineYear) {
+        // Convert year to date range (Jan-Mar for good vegetation coverage)
+        baselineStart = `${options.baselineYear}-01-01`;
+        baselineEnd = `${options.baselineYear}-03-31`;
+    } else {
+        baselineStart = options.baselineStart || '2023-01-01';
+        baselineEnd = options.baselineEnd || '2023-03-31';
+    }
+    
+    if (options.currentYear) {
+        // Convert year to date range (same months for comparison)
+        currentStart = `${options.currentYear}-01-01`;
+        currentEnd = `${options.currentYear}-03-31`;
+    } else {
+        currentStart = options.currentStart || '2023-10-01';
+        currentEnd = options.currentEnd || '2023-12-31';
+    }
+    
     const config = {
         region: options.region || 'Amazon',
-        baselineStart: options.baselineStart || '2023-01-01',
-        baselineEnd: options.baselineEnd || '2023-03-31',
-        currentStart: options.currentStart || '2023-10-01',
-        currentEnd: options.currentEnd || '2023-12-31',
+        baselineStart,
+        baselineEnd,
+        currentStart,
+        currentEnd,
         scale: options.scale || 30,
-        dataset: options.dataset || 'COPERNICUS/S2_SR_HARMONIZED'
+        dataset: options.dataset || 'COPERNICUS/S2_SR_HARMONIZED',
+        sensitivity: options.sensitivity || 'medium'
     };
     
     const results = {
@@ -674,11 +696,26 @@ async function deforestationDetection(options = {}) {
             const loss = baselineNDVI.value - currentNDVI.value;
             results.deforestation.percentLoss = (loss / baselineNDVI.value) * 100;
             
-            if (results.deforestation.percentLoss > 10) {
+            // Adjust thresholds based on sensitivity
+            const thresholds = {
+                high: { critical: 5, warning: 2 },
+                medium: { critical: 10, warning: 5 },
+                low: { critical: 20, warning: 10 }
+            };
+            
+            const threshold = thresholds[config.sensitivity] || thresholds.medium;
+            
+            if (results.deforestation.percentLoss > threshold.critical) {
                 results.alerts.push({
                     type: 'CRITICAL',
-                    message: 'Significant forest loss detected',
+                    message: `Significant forest loss detected (${results.deforestation.percentLoss.toFixed(2)}%)`,
                     action: 'Immediate investigation required'
+                });
+            } else if (results.deforestation.percentLoss > threshold.warning) {
+                results.alerts.push({
+                    type: 'WARNING',
+                    message: `Moderate forest loss detected (${results.deforestation.percentLoss.toFixed(2)}%)`,
+                    action: 'Monitor closely'
                 });
             }
             
@@ -705,13 +742,33 @@ async function deforestationDetection(options = {}) {
             results.changeDetection = changeResult;
         }
         
-        // Generate alerts and recommendations
-        if (results.deforestation.percentLoss > 5) {
+        // Generate alerts and recommendations based on sensitivity and loss
+        const threshold = {
+            high: { critical: 5, warning: 2 },
+            medium: { critical: 10, warning: 5 },
+            low: { critical: 20, warning: 10 }
+        }[config.sensitivity] || { critical: 10, warning: 5 };
+        
+        if (results.deforestation.percentLoss > threshold.critical) {
             results.recommendations = [
-                'Deploy ground teams for verification',
-                'Increase monitoring frequency',
-                'Alert local authorities',
-                'Document affected areas'
+                'Deploy ground teams for immediate verification',
+                'Alert environmental authorities',
+                'Initiate satellite monitoring with daily updates',
+                'Document affected areas with high-resolution imagery',
+                'Investigate potential illegal logging activities',
+                'Coordinate with local communities for protection measures'
+            ];
+        } else if (results.deforestation.percentLoss > threshold.warning) {
+            results.recommendations = [
+                'Increase monitoring frequency to weekly',
+                'Document changes for trend analysis',
+                'Alert local forest management',
+                'Prepare intervention plans if trend continues'
+            ];
+        } else {
+            results.recommendations = [
+                'Continue routine monitoring',
+                'Maintain current conservation efforts'
             ];
         }
         
