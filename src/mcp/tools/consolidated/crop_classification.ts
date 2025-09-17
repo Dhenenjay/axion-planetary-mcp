@@ -782,7 +782,7 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
       }
     }
     
-    // Create result object
+    // Create result object - simplified version for large responses
     let result: any = {
       success: true,
       operation: 'classify',
@@ -794,10 +794,17 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
       classifier: classifier,
       numberOfClasses: Object.keys(classInfo.definitions).length,
       classDefinitions: classInfo.definitions,
-      features: selectedFeatures,
-      trainingPoints: trainingPoints.length,
-      statistics: stats
+      trainingPoints: trainingPoints.length
     };
+    
+    // Only include detailed data if not too large
+    const includeDetails = !stats || JSON.stringify(stats).length < 1000;
+    if (includeDetails) {
+      result.features = selectedFeatures;
+      result.statistics = stats;
+    } else {
+      result.note = 'Detailed statistics omitted due to size. Map visualization available below.';
+    }
     
     // Create interactive map if requested
     if (createMap) {
@@ -875,8 +882,37 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
         url: mapUrl,
         tileUrl: tileUrl,
         center: center,
-        visualization: visParams
+        visualization: visParams,
+        mapId: mapSessionId
       };
+      
+      // If response is too large, return just the essential map info
+      const currentSize = JSON.stringify(result).length;
+      if (currentSize > 50000) {
+        // Return simplified response with map list
+        const maps = Object.values(activeMaps).map((session: any) => ({
+          id: session.id,
+          url: `https://axion-planetary-mcp.onrender.com/map/${session.id}`,
+          region: session.region,
+          created: session.created.toISOString(),
+          layers: session.layers.length
+        }));
+        
+        return {
+          success: true,
+          operation: 'classify',
+          message: 'Crop classification completed. Map created successfully.',
+          region: stateName,
+          classifier: classifier,
+          numberOfClasses: Object.keys(classInfo.definitions).length,
+          classDefinitions: classInfo.definitions,
+          mapCreated: true,
+          mapUrl: `https://axion-planetary-mcp.onrender.com/map/${mapSessionId}`,
+          availableMaps: maps,
+          instruction: 'Open the mapUrl in your browser to view the interactive crop classification map',
+          note: 'Full classification details available but omitted due to size. Use the map URL to visualize results.'
+        };
+      }
     }
     
     return result;
