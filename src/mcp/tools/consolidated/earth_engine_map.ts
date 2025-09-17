@@ -463,9 +463,6 @@ async function createMap(params: any) {
     // Use the global store helper
     addMapSession(mapId, session);
     
-    // Generate the map URL (use Render deployment)
-    const mapUrl = `https://axion-planetary-mcp.onrender.com/map/${mapId}`;
-    
     // Check if we have any layers
     if (mapLayers.length === 0) {
       return {
@@ -476,28 +473,48 @@ async function createMap(params: any) {
       };
     }
     
+    // Generate instructions for using the tiles
+    const leafletExample = `
+// Leaflet.js example:
+L.tileLayer('${mapLayers[0].tileUrl}', {
+    attribution: 'Google Earth Engine',
+    maxZoom: 18
+}).addTo(map);`;
+    
+    const mapboxExample = `
+// Mapbox GL JS example:  
+map.addSource('earth-engine', {
+    'type': 'raster',
+    'tiles': ['${mapLayers[0].tileUrl}'],
+    'tileSize': 256
+});`;
+    
     return {
       success: true,
       operation: 'create',
       mapId,
-      url: mapUrl,
       tileUrl: mapLayers[0].tileUrl,
       layers: mapLayers.map(l => ({
         name: l.name,
         tileUrl: l.tileUrl
       })),
-      message: 'Interactive map created successfully',
+      message: 'Map tiles generated successfully',
       region,
       center: mapCenter,
       zoom,
       basemap,
-      instructions: `Open ${mapUrl} in your browser to view the interactive map`,
+      instructions: 'Use the tile URLs with any web mapping library (Leaflet, Mapbox GL, Google Maps, etc.)',
+      usage: {
+        leaflet: leafletExample,
+        mapbox: mapboxExample,
+        direct: `Direct tile URL (XYZ format): ${mapLayers[0].tileUrl}`,
+        note: 'Replace {z}, {x}, {y} with zoom level and tile coordinates'
+      },
       features: [
-        'Zoom in/out with mouse wheel or +/- buttons',
-        'Pan by dragging the map',
-        'Switch between layers (if multiple)',
-        'Toggle basemap styles',
-        'Full-screen mode available'
+        'Earth Engine processed imagery',
+        'XYZ tile format compatible with most mapping libraries',
+        'Global coverage based on your specified region',
+        'Real-time tile serving from Google Earth Engine'
       ]
     };
   } catch (error: any) {
@@ -516,7 +533,7 @@ async function createMap(params: any) {
 async function listMaps() {
   const maps = Object.values(activeMaps).map(session => ({
     id: session.id,
-    url: `https://axion-planetary-mcp.onrender.com/map/${session.id}`,
+    tileUrl: session.tileUrl,
     region: session.region,
     created: session.created.toISOString(),
     layers: session.layers.length
@@ -527,7 +544,7 @@ async function listMaps() {
     operation: 'list',
     count: maps.length,
     maps,
-    message: `${maps.length} active map(s)`
+    message: `${maps.length} active map session(s) with tile URLs`
   };
 }
 
