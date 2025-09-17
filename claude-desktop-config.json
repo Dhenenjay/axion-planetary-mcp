@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "axion-planetary": {
+      "command": "npx",
+      "args": [
+        "axion-planetary-mcp"
+      ],
+      "env": {
+        "AXION_API_URL": "https://axion-planetary-mcp.onrender.com"
+      }
+    }
+  }
+}

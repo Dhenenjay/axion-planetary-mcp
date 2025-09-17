@@ -337,6 +337,12 @@ const MODELS = [
 // Combine tools and models
 const ALL_TOOLS = [...TOOLS, ...MODELS];
 
+// Handle readline close event
+rl.on('close', () => {
+  console.error('[MCP Bridge] Readline interface closed');
+  // Don't exit - let the process continue running
+});
+
 // Handle incoming messages from MCP client
 rl.on('line', (line) => {
   buffer += line;
@@ -545,3 +551,17 @@ setInterval(async () => {
 }, 60000); // Check every minute
 
 console.error('[MCP Bridge] Ready to receive commands from hosted service');
+
+// Keep the process alive
+process.stdin.resume();
+
+// Handle process termination gracefully
+process.on('SIGINT', () => {
+  console.error('[MCP Bridge] Shutting down...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.error('[MCP Bridge] Shutting down...');
+  process.exit(0);
+});

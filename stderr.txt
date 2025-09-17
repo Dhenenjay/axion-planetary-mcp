@@ -1,0 +1,2 @@
+[MCP Bridge] Connecting to hosted service at https://axion-planetary-mcp.onrender.com
+[MCP Bridge] Ready to receive commands from hosted service
