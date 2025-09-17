@@ -449,9 +449,12 @@ async function handleMessage(message) {
 function sendResponse(id, result) {
   const response = {
     jsonrpc: '2.0',
-    id: id !== undefined ? id : null,
     result
   };
+  // Only include id if it's defined
+  if (id !== undefined) {
+    response.id = id;
+  }
   // Write directly to stdout with newline for proper JSON-RPC
   process.stdout.write(JSON.stringify(response) + '\n');
 }
@@ -460,12 +463,15 @@ function sendResponse(id, result) {
 function sendError(id, code, message) {
   const response = {
     jsonrpc: '2.0',
-    id: id !== undefined ? id : null,
     error: {
       code,
       message
     }
   };
+  // Only include id if it's defined
+  if (id !== undefined) {
+    response.id = id;
+  }
   // Write directly to stdout with newline for proper JSON-RPC
   process.stdout.write(JSON.stringify(response) + '\n');
 }
