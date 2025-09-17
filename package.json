@@ -76,7 +76,7 @@
     "build:next": "next build",
     "start": "node dist/index.mjs",
     "start:next": "next start",
-    "start:prod": "node start-production.js",
+    "start:prod": "node start-production.cjs",
     "lint": "next lint",
     "test-advanced-earthengine": "node scripts/test-advanced-earthengine.mjs",
     "typecheck": "tsc -p . --noEmit",
