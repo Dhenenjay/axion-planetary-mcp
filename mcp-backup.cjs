@@ -323,9 +323,6 @@ const MODELS = [
 
 const ALL_TOOLS = [...TOOLS, ...MODELS];
 
-// Response queue to prevent message interleaving
-let responseQueue = Promise.resolve();
-
 function sendResponse(id, result) {
   const response = {
     jsonrpc: '2.0',
@@ -334,13 +331,7 @@ function sendResponse(id, result) {
   if (id !== undefined) {
     response.id = id;
   }
-  
-  // Queue the response to prevent interleaving
-  responseQueue = responseQueue.then(() => {
-    process.stdout.write(JSON.stringify(response) + '\n');
-    // Small delay to ensure Claude processes each message
-    return new Promise(resolve => setTimeout(resolve, 10));
-  });
+  process.stdout.write(JSON.stringify(response) + '\n');
 }
 
 function sendError(id, code, message) {
@@ -354,12 +345,7 @@ function sendError(id, code, message) {
   if (id !== undefined) {
     response.id = id;
   }
-  
-  // Queue the error response
-  responseQueue = responseQueue.then(() => {
-    process.stdout.write(JSON.stringify(response) + '\n');
-    return new Promise(resolve => setTimeout(resolve, 10));
-  });
+  process.stdout.write(JSON.stringify(response) + '\n');
 }
 
 function makeRequest(data) {

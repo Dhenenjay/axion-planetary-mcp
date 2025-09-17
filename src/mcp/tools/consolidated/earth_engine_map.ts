@@ -210,6 +210,7 @@ async function createMap(params: any) {
     input,
     region = 'Unknown',
     layers,
+    datasets,  // Also accept 'datasets' field
     bands = ['B4', 'B3', 'B2'],
     visParams = {},
     center,
@@ -217,19 +218,25 @@ async function createMap(params: any) {
     basemap = 'satellite'
   } = params;
   
+  // Accept both 'datasets' and 'layers' for compatibility
+  const actualLayers = layers || datasets;
+  
   console.log(`[Map] Creating map for input: ${input || 'none (using layer inputs)'}`);
   console.log(`[Map] Original visParams:`, visParams);
   
   // Check if we have input or layers with individual inputs
-  if (!input && (!layers || layers.length === 0)) {
-    throw new Error('Either input or layers with individual inputs required');
+  if (!input && (!actualLayers || actualLayers.length === 0)) {
+    throw new Error('Either input or layers/datasets with individual inputs required');
   }
   
   // Validate that layers have inputs or tileUrls if no primary input is provided
-  if (!input && layers && layers.length > 0) {
-    const hasInputs = layers.every(layer => layer.input || layer.tileUrl);
+  if (!input && actualLayers && actualLayers.length > 0) {
+    // Map 'datasetId' to 'input' for compatibility
+    const hasInputs = actualLayers.every((layer: any) => 
+      layer.input || layer.datasetId || layer.tileUrl
+    );
     if (!hasInputs) {
-      throw new Error('When no primary input is provided, all layers must have their own input or tileUrl');
+      throw new Error('When no primary input is provided, all layers must have their own input, datasetId, or tileUrl');
     }
   }
   
@@ -246,15 +253,18 @@ async function createMap(params: any) {
   const mapLayers: any[] = [];
   
   // Detect dataset type for proper visualization (use first available input)
-  const datasetTypeInput = input || (layers && layers.length > 0 && layers[0].input) || '';
+  const datasetTypeInput = input || 
+    (actualLayers && actualLayers.length > 0 && (actualLayers[0].input || actualLayers[0].datasetId)) || '';
   const datasetType = detectDatasetType(datasetTypeInput);
   console.log(`[Map] Detected dataset type: ${datasetType}`);
   
   try {
     // Process multiple layers or single layer
-    if (layers && layers.length > 0) {
+    if (actualLayers && actualLayers.length > 0) {
       // Multiple layers
-      for (const layer of layers) {
+      for (const layer of actualLayers) {
+        // Map 'datasetId' to 'input' for compatibility
+        const layerInput = layer.input || layer.datasetId;
         // Check if layer has a direct tile URL
         if (layer.tileUrl) {
           // Direct tile URL provided - skip image processing
@@ -267,31 +277,31 @@ async function createMap(params: any) {
           continue;
         }
         
-        // Get the image for this layer (either from layer.input or use primary image)
+        // Get the image for this layer (either from layerInput or use primary image)
         let layerImage;
         let layerDatasetType = datasetType;
         
-        if (layer.input) {
+        if (layerInput) {
           // Layer has its own input source
-          layerImage = compositeStore[layer.input];
+          layerImage = compositeStore[layerInput];
           if (!layerImage) {
-            console.log(`[Map] No image found in store for: ${layer.input}, attempting direct creation...`);
+            console.log(`[Map] No image found in store for: ${layerInput}, attempting direct creation...`);
             
             // FALLBACK: Create the image directly based on the input key pattern
             try {
-              if (layer.input.includes('classification')) {
+              if (layerInput.includes('classification')) {
                 // Create a simple classification visualization directly
                 console.log(`[Map] Creating classification layer directly`);
                 // Create a dummy classification image with random values 1-6
                 layerImage = ee.Image.random(42).multiply(6).add(1).floor().rename('classification');
-              } else if (layer.input.includes('ndvi')) {
+              } else if (layerInput.includes('ndvi')) {
                 // Create NDVI directly from any available composite
                 console.log(`[Map] Creating NDVI layer directly`);
                 const tempComposite = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
                   .filterDate('2024-06-01', '2024-08-31')
                   .median();
                 layerImage = tempComposite.normalizedDifference(['B8', 'B4']).rename('NDVI');
-              } else if (layer.input.includes('composite') || layer.input.includes('s2')) {
+              } else if (layerInput.includes('composite') || layerInput.includes('s2')) {
                 // Create Sentinel-2 composite directly
                 console.log(`[Map] Creating Sentinel-2 composite directly`);
                 layerImage = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
@@ -303,7 +313,7 @@ async function createMap(params: any) {
                   })
                   .median();
               } else {
-                console.log(`[Map] Could not create fallback for ${layer.input}, skipping`);
+                console.log(`[Map] Could not create fallback for ${layerInput}, skipping`);
                 continue;
               }
             } catch (fallbackError) {
@@ -311,7 +321,7 @@ async function createMap(params: any) {
               continue;
             }
           }
-          layerDatasetType = detectDatasetType(layer.input);
+          layerDatasetType = detectDatasetType(layerInput);
         } else if (primaryImage) {
           // Use the primary image
           layerImage = primaryImage;
@@ -324,7 +334,7 @@ async function createMap(params: any) {
         let layerBands = layer.bands;
         if (!layerBands) {
           // Check if this is an index layer based on the input key
-          const inputLower = (layer.input || '').toLowerCase();
+          const inputLower = (layerInput || '').toLowerCase();
           const nameLower = layer.name.toLowerCase();
           
           if (inputLower.includes('ndvi') || nameLower.includes('ndvi')) {
@@ -350,7 +360,7 @@ async function createMap(params: any) {
         const rawVis = { ...visParams, ...layer.visParams };
         const layerVis = normalizeVisParams(rawVis, layerBands, layerDatasetType);
         
-        console.log(`[Map] Layer ${layer.name} - input: ${layer.input || input}, bands: ${layerBands}, vis:`, layerVis);
+        console.log(`[Map] Layer ${layer.name} - input: ${layerInput || input}, bands: ${layerBands}, vis:`, layerVis);
         
         // Select bands and visualize
         let visualized;
