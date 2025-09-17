@@ -406,7 +406,7 @@ async function handleMessage(message) {
         },
         serverInfo: {
           name: 'Axion Planetary MCP (Hosted)',
-          version: '1.2.0'
+          version: '1.2.2'
         }
       });
       break;
