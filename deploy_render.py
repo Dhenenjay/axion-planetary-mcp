@@ -60,11 +60,11 @@ service_config = {
         "env": "node",
         "region": "oregon",
         "plan": "starter",
-        "buildCommand": "npm install && npm run build:next",
+        "buildCommand": "npm ci --production=false && npm run build:next",
         "startCommand": "npm run start:prod",
         "healthCheckPath": "/api/health",
         "envSpecificDetails": {
-            "buildCommand": "npm install && npm run build:next",
+            "buildCommand": "npm ci --production=false && npm run build:next",
             "startCommand": "npm run start:prod"
         }
     }
