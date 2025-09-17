@@ -5,8 +5,23 @@
  * Can be imported and customized for various use cases
  */
 
-// Import consolidated tools directly
-const { callTool } = require('../mcp/server-consolidated');
+// Import consolidated tools conditionally based on environment
+let callTool;
+try {
+    // Try to import server-utils first (for updated code)
+    callTool = require('../mcp/server-utils').callTool;
+} catch (e) {
+    try {
+        // Fall back to server-consolidated if server-utils doesn't exist
+        callTool = require('../mcp/server-consolidated').callTool;
+    } catch (e2) {
+        // If neither exists, we're likely in a browser/build context
+        // The callTool function should be provided by the calling context
+        callTool = async () => {
+            throw new Error('callTool not available in this context');
+        };
+    }
+}
 
 // Helper function for Earth Engine API calls
 async function callEarthEngine(tool, args) {
