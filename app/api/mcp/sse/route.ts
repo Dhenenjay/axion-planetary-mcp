@@ -33,48 +33,89 @@ export async function POST(req: NextRequest) {
       userAgent: req.headers.get('user-agent') || undefined
     });
     
+    // Import handlers
+    const { callTool } = await import('../../../../src/mcp/server-consolidated');
+    
     // Extract tool and arguments from the MCP request format
-    let forwardBody;
+    let toolName: string;
+    let toolArgs: any;
+    
     if (body.method === 'tools/call' && body.params) {
       // MCP format: { method: 'tools/call', params: { tool, arguments } }
-      forwardBody = {
-        tool: body.params.tool,
-        arguments: body.params.arguments || {}
-      };
-    } else if (body.tool && body.arguments) {
+      toolName = body.params.tool;
+      toolArgs = body.params.arguments || {};
+    } else if (body.tool) {
       // Direct format: { tool, arguments }
-      forwardBody = body;
+      toolName = body.tool;
+      toolArgs = body.arguments || {};
     } else {
-      // Fallback: assume the entire body is the request
-      forwardBody = body;
+      throw new Error('Invalid request format');
     }
     
-    console.log('Forwarding to consolidated:', JSON.stringify(forwardBody, null, 2));
+    console.log('Executing tool:', toolName);
+    console.log('With arguments:', JSON.stringify(toolArgs, null, 2));
     
-    // Forward to the consolidated endpoint
-    const consolidatedUrl = new URL('/api/mcp/consolidated', req.url);
-    const response = await fetch(consolidatedUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(forwardBody)
-    });
+    // Model tools that need special handling
+    const modelTools = [
+      'wildfire_risk_assessment',
+      'flood_risk_assessment',
+      'flood_risk_analysis',
+      'agricultural_monitoring',
+      'agriculture_monitoring',
+      'deforestation_detection',
+      'deforestation_tracking',
+      'water_quality_monitoring',
+      'water_quality_assessment',
+      'water_quality_analysis'
+    ];
     
-    const result = await response.json();
+    let result;
+    
+    try {
+      // Try calling as a registered tool first
+      result = await callTool(toolName, toolArgs);
+    } catch (toolError: any) {
+      // If it's a model tool, handle it specially
+      if (modelTools.includes(toolName)) {
+        const models = await import('../../../../src/models/geospatial-models.js');
+        
+        const modelMap: any = {
+          'wildfire_risk_assessment': models.wildfireRiskAssessment,
+          'flood_risk_assessment': models.floodRiskAssessment,
+          'flood_risk_analysis': models.floodRiskAssessment,
+          'agricultural_monitoring': models.agriculturalMonitoring,
+          'agriculture_monitoring': models.agriculturalMonitoring,
+          'deforestation_detection': models.deforestationDetection,
+          'deforestation_tracking': models.deforestationDetection,
+          'water_quality_monitoring': models.waterQualityMonitoring,
+          'water_quality_assessment': models.waterQualityMonitoring,
+          'water_quality_analysis': models.waterQualityMonitoring
+        };
+        
+        const modelFunc = modelMap[toolName];
+        if (modelFunc) {
+          result = await modelFunc(toolArgs);
+        } else {
+          throw new Error(`Model function not found for: ${toolName}`);
+        }
+      } else {
+        // Not a model tool, re-throw the original error
+        throw toolError;
+      }
+    }
     
     // Track success metrics
     analytics.track({
       eventType: 'api_response',
-      tool,
+      tool: toolName,
       operation,
       duration: Date.now() - startTime,
-      error: response.status >= 400
+      error: false
     });
     
     // Add CORS headers for production
     return new Response(JSON.stringify(result), {
-      status: response.status,
+      status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
