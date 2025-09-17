@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: axion-planetary-mcp
+    runtime: node
+    repo: https://github.com/Dhenenjay/axion-planetary-mcp
+    branch: master
+    region: oregon
+    plan: free
+    
+    buildCommand: npm install && npm run build:next && npm run build
+    startCommand: npm run start:prod
+    
+    healthCheckPath: /api/health
+    
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false
+      - key: ANALYTICS_ENABLED
+        value: true
+      - key: CORS_ORIGIN
+        value: "*"
+      
+    autoDeploy: true

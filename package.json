@@ -4,7 +4,7 @@
   "description": "🌍 The Foundation for Democratizing Geospatial AI Agents - Transform PhD-level Earth observation into natural conversation",
   "private": false,
   "type": "module",
-  "main": "mcp-sse-complete.cjs",
+  "main": "mcp-hosted.cjs",
   "bin": {
     "axion-mcp": "./cli.js",
     "axion-setup": "./cli.js"
@@ -24,6 +24,7 @@
     "mcp-consolidated.cjs",
     "mcp-all-tools.cjs",
     "mcp-ultimate.cjs",
+    "mcp-hosted.cjs",
     "next.config.ts",
     "tsconfig.json",
     "postcss.config.mjs",
@@ -69,10 +70,13 @@
   "scripts": {
     "setup:check": "node setup-check.js",
     "dev": "tsx watch src/index.ts",
+    "dev:local": "node mcp-sse-complete.cjs",
+    "dev:hosted": "node mcp-hosted.cjs",
     "build": "tsup src/index.ts --format esm --dts --clean",
-    "build:next": "echo 'Build already included in package'",
+    "build:next": "next build",
     "start": "node dist/index.mjs",
     "start:next": "next start",
+    "start:prod": "node server.js",
     "lint": "next lint",
     "test-advanced-earthengine": "node scripts/test-advanced-earthengine.mjs",
     "typecheck": "tsc -p . --noEmit",
@@ -81,7 +85,9 @@
     "test:complete": "node scripts/test-ee-complete.mjs",
     "format": "prettier -w .",
     "test:client": "node scripts/test-ee-tools.mjs",
-    "test:health": "curl http://localhost:3000/api/health"
+    "test:health": "curl http://localhost:3000/api/health",
+    "deploy": "git push origin master",
+    "deploy:manual": "npx render-cli deploy"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.0",
