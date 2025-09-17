@@ -763,7 +763,7 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
     
     // Calculate statistics (skip for very large states to avoid memory issues)
     let stats = null;
-    const largeStates = ['California', 'Texas', 'Alaska', 'Montana'];
+    const largeStates = ['California', 'Texas', 'Alaska', 'Montana', 'Iowa'];
     
     if (!largeStates.includes(stateName)) {
       try {
@@ -780,6 +780,8 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
         console.log('Statistics calculation skipped due to memory constraints');
         stats = null;
       }
+    } else {
+      console.log(`Statistics calculation skipped for large state: ${stateName}`);
     }
     
     // Create result object - simplified version for large responses
@@ -806,8 +808,11 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
       result.note = 'Detailed statistics omitted due to size. Map visualization available below.';
     }
     
-    // Create interactive map if requested
-    if (createMap) {
+    // Create interactive map if requested or if statistics failed  
+    // Always create map for better visualization
+    if (createMap || !stats) {
+      console.log('Creating interactive map for crop classification...');
+      
       // IMPORTANT: Visualize the classification before getting tiles
       // This ensures proper color rendering
       const visParams = {
@@ -816,19 +821,29 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
         palette: classInfo.palette
       };
       
+      console.log('Visualization parameters:', visParams);
+      
       // Apply visualization to get RGB image
       const visualized = classified.visualize(visParams);
       
       // Get map ID from the visualized image
+      console.log('Getting map ID from Earth Engine...');
       const mapId = await new Promise((resolve, reject) => {
         visualized.getMapId({}, (mapIdResult: any, error: any) => {
-          if (error) reject(error);
-          else resolve(mapIdResult);
+          if (error) {
+            console.error('Error getting map ID:', error);
+            reject(error);
+          } else {
+            console.log('Map ID obtained successfully');
+            resolve(mapIdResult);
+          }
         });
       });
       
       // Generate tile URL
       const mapIdStr = (mapId as any).mapid || (mapId as any).urlFormat;
+      console.log('Map ID string:', mapIdStr);
+      
       let tileUrl: string;
       
       if (mapIdStr.includes('http')) {
@@ -842,9 +857,11 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
         tileUrl = `https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/${mapIdStr}/tiles/{z}/{x}/{y}`;
       }
       
+      console.log('Generated tile URL:', tileUrl);
+      
       // Create map session
       const mapSessionId = `map_${Date.now()}_${uuidv4().slice(0, 8)}`;
-      const mapUrl = `http://localhost:3000/map/${mapSessionId}`;
+      const mapUrl = `https://axion-planetary-mcp.onrender.com/map/${mapSessionId}`;
       
       // Determine map center
       const bounds = await geometry.bounds().getInfo();
@@ -877,6 +894,8 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
       };
       
       addMapSession(mapSessionId, mapSession);
+      console.log(`Map session created: ${mapSessionId}`);
+      console.log(`Map URL: ${mapUrl}`);
       
       result.map = {
         url: mapUrl,
@@ -885,6 +904,8 @@ async function classifyCrops(params: CropClassificationParams & { groundTruthPat
         visualization: visParams,
         mapId: mapSessionId
       };
+      result.mapUrl = mapUrl;  // Add mapUrl at top level for easier access
+      result.mapSessionId = mapSessionId;
       
       // If response is too large, return just the essential map info
       const currentSize = JSON.stringify(result).length;
@@ -948,8 +969,8 @@ export async function execute(params: any) {
       return await classifyCrops(parsed.data);
     
     case 'train':
-      // For future: separate training operation
-      return await classifyCrops({ ...parsed.data, createMap: false });
+      // Train operation also creates a map to visualize results
+      return await classifyCrops({ ...parsed.data, createMap: true });
     
     case 'evaluate':
       // For future: model evaluation
