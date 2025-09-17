@@ -22,6 +22,12 @@ const rl = readline.createInterface({
   terminal: false
 });
 
+// Prevent the readline interface from closing
+rl.on('pause', () => {
+  console.error('[MCP Bridge] Readline paused, resuming...');
+  rl.resume();
+});
+
 // Buffer for incomplete messages
 let buffer = '';
 
@@ -399,8 +405,10 @@ async function handleMessage(message) {
   
   switch (method) {
     case 'initialize':
+      // Match the client's protocol version
+      const clientVersion = params?.protocolVersion || '2025-06-18';
       sendResponse(id, {
-        protocolVersion: '0.1.0',
+        protocolVersion: clientVersion,
         capabilities: {
           tools: {}
         },
@@ -409,6 +417,12 @@ async function handleMessage(message) {
           version: '1.2.4'
         }
       });
+      console.error('[MCP Bridge] Initialization complete, staying alive...');
+      break;
+      
+    case 'initialized':
+      // This is a notification, no response needed
+      console.error('[MCP Bridge] Client confirmed initialization');
       break;
       
     case 'tools/list':
