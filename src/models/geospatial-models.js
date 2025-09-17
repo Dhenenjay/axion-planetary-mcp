@@ -9,18 +9,31 @@
 let callTool;
 try {
     // Try to import server-utils first (for updated code)
-    callTool = require('../mcp/server-utils').callTool;
+    const serverUtils = require('../mcp/server-utils');
+    callTool = serverUtils.callTool;
 } catch (e) {
-    try {
-        // Fall back to server-consolidated if server-utils doesn't exist
-        callTool = require('../mcp/server-consolidated').callTool;
-    } catch (e2) {
-        // If neither exists, we're likely in a browser/build context
-        // The callTool function should be provided by the calling context
-        callTool = async () => {
-            throw new Error('callTool not available in this context');
-        };
-    }
+    // If import fails, create a stub that uses fetch to call the API
+    callTool = async (tool, args) => {
+        // In production, make direct API calls
+        if (typeof fetch !== 'undefined') {
+            try {
+                const response = await fetch('/api/mcp/sse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: 'tools/call',
+                        params: { tool, arguments: args }
+                    })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error(`Error calling ${tool}:`, error);
+                return { success: false, error: error.message };
+            }
+        }
+        // Fallback for non-browser environments
+        return { success: false, error: 'callTool not available in this context' };
+    };
 }
 
 // Helper function for Earth Engine API calls

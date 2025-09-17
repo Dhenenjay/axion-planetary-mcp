@@ -79,23 +79,28 @@ export async function POST(req: NextRequest) {
       if (modelTools.includes(toolName)) {
         const models = await import('../../../../src/models/geospatial-models.js');
         
+        // Handle both ES module and CommonJS exports
+        const moduleExports = models.default || models;
+        
         const modelMap: any = {
-          'wildfire_risk_assessment': models.wildfireRiskAssessment,
-          'flood_risk_assessment': models.floodRiskAssessment,
-          'flood_risk_analysis': models.floodRiskAssessment,
-          'agricultural_monitoring': models.agriculturalMonitoring,
-          'agriculture_monitoring': models.agriculturalMonitoring,
-          'deforestation_detection': models.deforestationDetection,
-          'deforestation_tracking': models.deforestationDetection,
-          'water_quality_monitoring': models.waterQualityMonitoring,
-          'water_quality_assessment': models.waterQualityMonitoring,
-          'water_quality_analysis': models.waterQualityMonitoring
+          'wildfire_risk_assessment': moduleExports.wildfireRiskAssessment,
+          'flood_risk_assessment': moduleExports.floodRiskAssessment,
+          'flood_risk_analysis': moduleExports.floodRiskAssessment,
+          'agricultural_monitoring': moduleExports.agriculturalMonitoring,
+          'agriculture_monitoring': moduleExports.agriculturalMonitoring,
+          'deforestation_detection': moduleExports.deforestationDetection,
+          'deforestation_tracking': moduleExports.deforestationDetection,
+          'water_quality_monitoring': moduleExports.waterQualityMonitoring,
+          'water_quality_assessment': moduleExports.waterQualityMonitoring,
+          'water_quality_analysis': moduleExports.waterQualityMonitoring
         };
         
         const modelFunc = modelMap[toolName];
         if (modelFunc) {
+          console.log(`Executing model function: ${toolName}`);
           result = await modelFunc(toolArgs);
         } else {
+          console.error(`Available functions:`, Object.keys(moduleExports));
           throw new Error(`Model function not found for: ${toolName}`);
         }
       } else {
