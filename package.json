@@ -1,6 +1,6 @@
 {
   "name": "axion-planetary-mcp",
-  "version": "1.2.20",
+  "version": "1.2.21",
   "description": "🌍 The Foundation for Democratizing Geospatial AI Agents - Transform PhD-level Earth observation into natural conversation",
   "private": false,
   "type": "module",
