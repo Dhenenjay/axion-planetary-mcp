@@ -1,39 +1,20 @@
 #!/usr/bin/env node
 
-/**
- * MCP-SSE Bridge for Hosted Service
- * Connects to the deployed Render service instead of localhost
- */
-
 const readline = require('readline');
 const https = require('https');
 const { URL } = require('url');
 
-// Get the API URL from environment or use the default Render URL
 const API_BASE_URL = process.env.AXION_API_URL || 'https://axion-planetary-mcp.onrender.com';
 const SSE_ENDPOINT = `${API_BASE_URL}/api/mcp/sse`;
 
-console.error(`[MCP Bridge] Connecting to hosted service at ${API_BASE_URL}`);
-
-// Create readline interface for stdio communication
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   terminal: false
 });
 
-// Prevent the readline interface from closing
-rl.on('pause', () => {
-  console.error('[MCP Bridge] Readline paused, resuming...');
-  rl.resume();
-});
-
-// Buffer for incomplete messages
-let buffer = '';
-
-// COMPLETE TOOLS LIST - All your original tools
+// All the tool definitions
 const TOOLS = [
-  // ========== CONSOLIDATED SUPER TOOLS ==========
   {
     name: 'earth_engine_data',
     description: 'Data Discovery & Access - search, filter, geometry, info, boundaries operations',
@@ -242,7 +223,7 @@ const TOOLS = [
   }
 ];
 
-// Pre-trained models
+// Models
 const MODELS = [
   {
     name: 'wildfire_risk_assessment',
@@ -340,126 +321,19 @@ const MODELS = [
   }
 ];
 
-// Combine tools and models
 const ALL_TOOLS = [...TOOLS, ...MODELS];
 
-// Handle readline close event
-rl.on('close', () => {
-  console.error('[MCP Bridge] Readline interface closed');
-  // Don't exit - let the process continue running
-});
-
-// Handle incoming messages from MCP client
-rl.on('line', (line) => {
-  try {
-    // Each line should be a complete JSON message
-    const message = JSON.parse(line);
-    handleMessage(message);
-  } catch (e) {
-    // If it's not valid JSON, try to buffer it
-    buffer += line;
-    
-    // Try to parse the buffer as complete JSON
-    try {
-      const message = JSON.parse(buffer);
-      handleMessage(message);
-      buffer = ''; // Clear buffer after successful parse
-    } catch (bufferError) {
-      // Still not valid, keep buffering
-      // But prevent buffer from growing too large
-      if (buffer.length > 100000) {
-        console.error('[MCP Bridge] Buffer too large, clearing');
-        buffer = '';
-      }
-    }
-  }
-});
-
-// Handle different message types
-async function handleMessage(message) {
-  const { id, method, params } = message;
-  
-  console.error(`[MCP Bridge] Received ${method} request`);
-  
-  // Validate message structure
-  if (!method) {
-    console.error('[MCP Bridge] Invalid message: missing method');
-    if (id !== undefined) {
-      sendError(id, -32600, 'Invalid Request: missing method');
-    }
-    return;
-  }
-  
-  switch (method) {
-    case 'initialize':
-      // Match the client's protocol version
-      const clientVersion = params?.protocolVersion || '2025-06-18';
-      sendResponse(id, {
-        protocolVersion: clientVersion,
-        capabilities: {
-          tools: {}
-        },
-        serverInfo: {
-          name: 'Axion Planetary MCP (Hosted)',
-          version: '1.2.8'
-        }
-      });
-      console.error('[MCP Bridge] Initialization complete, staying alive...');
-      break;
-      
-    case 'initialized':
-      // This is a notification, no response needed
-      console.error('[MCP Bridge] Client confirmed initialization');
-      break;
-      
-    case 'tools/list':
-      sendResponse(id, {
-        tools: ALL_TOOLS.map(tool => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema
-        }))
-      });
-      break;
-      
-    case 'prompts/list':
-      // We don't have prompts, return empty array
-      sendResponse(id, {
-        prompts: []
-      });
-      break;
-      
-    case 'resources/list':
-      // We don't have resources, return empty array
-      sendResponse(id, {
-        resources: []
-      });
-      break;
-      
-    case 'tools/call':
-      await handleToolCall(id, params);
-      break;
-      
-    default:
-      sendError(id, -32601, `Method not supported: ${method}`);
-  }
-}
-
-// Send response back to MCP client
 function sendResponse(id, result) {
   const response = {
     jsonrpc: '2.0',
     result
   };
-  // Only include id if it's defined
   if (id !== undefined) {
     response.id = id;
   }
-  // Write directly to stdout with newline for proper JSON-RPC
   process.stdout.write(JSON.stringify(response) + '\n');
 }
 
-// Send error response
 function sendError(id, code, message) {
   const response = {
     jsonrpc: '2.0',
@@ -468,15 +342,12 @@ function sendError(id, code, message) {
       message
     }
   };
-  // Only include id if it's defined
   if (id !== undefined) {
     response.id = id;
   }
-  // Write directly to stdout with newline for proper JSON-RPC
   process.stdout.write(JSON.stringify(response) + '\n');
 }
 
-// Make HTTPS request to hosted service
 function makeRequest(data) {
   return new Promise((resolve, reject) => {
     const url = new URL(SSE_ENDPOINT);
@@ -519,14 +390,10 @@ function makeRequest(data) {
   });
 }
 
-// Handle tool execution
 async function handleToolCall(id, params) {
   const { name: tool, arguments: args } = params;
   
-  console.error(`[MCP Bridge] Executing tool: ${tool}`);
-  
   try {
-    // Make request to hosted service
     const result = await makeRequest({
       method: 'tools/call',
       params: {
@@ -544,7 +411,6 @@ async function handleToolCall(id, params) {
       ]
     });
   } catch (error) {
-    console.error(`[MCP Bridge] Tool execution error:`, error);
     sendResponse(id, {
       content: [
         {
@@ -557,34 +423,76 @@ async function handleToolCall(id, params) {
   }
 }
 
-// Health check
-setInterval(async () => {
-  try {
-    const url = new URL(`${API_BASE_URL}/api/health`);
-    https.get(url.href, (res) => {
-      if (res.statusCode !== 200) {
-        console.error(`[MCP Bridge] Health check failed: ${res.statusCode}`);
-      }
-    }).on('error', (err) => {
-      console.error(`[MCP Bridge] Health check error:`, err.message);
-    });
-  } catch (error) {
-    console.error(`[MCP Bridge] Health check error:`, error.message);
+async function handleMessage(message) {
+  const { id, method, params } = message;
+  
+  switch (method) {
+    case 'initialize':
+      const clientVersion = params?.protocolVersion || '2025-06-18';
+      sendResponse(id, {
+        protocolVersion: clientVersion,
+        capabilities: {
+          tools: {}
+        },
+        serverInfo: {
+          name: 'Axion Planetary MCP (Hosted)',
+          version: '1.2.8'
+        }
+      });
+      break;
+      
+    case 'initialized':
+      // This is a notification, no response needed
+      break;
+      
+    case 'tools/list':
+      sendResponse(id, {
+        tools: ALL_TOOLS.map(tool => ({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: tool.inputSchema
+        }))
+      });
+      break;
+      
+    case 'prompts/list':
+      sendResponse(id, {
+        prompts: []
+      });
+      break;
+      
+    case 'resources/list':
+      sendResponse(id, {
+        resources: []
+      });
+      break;
+      
+    case 'tools/call':
+      await handleToolCall(id, params);
+      break;
+      
+    default:
+      sendError(id, -32601, `Method not supported: ${method}`);
   }
-}, 60000); // Check every minute
+}
 
-console.error('[MCP Bridge] Ready to receive commands from hosted service');
+rl.on('line', (line) => {
+  try {
+    const message = JSON.parse(line);
+    handleMessage(message);
+  } catch (e) {
+    // Silently ignore parse errors
+  }
+});
 
-// Keep the process alive
+// Keep process alive
 process.stdin.resume();
 
-// Handle process termination gracefully
+// Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.error('[MCP Bridge] Shutting down...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.error('[MCP Bridge] Shutting down...');
   process.exit(0);
 });
