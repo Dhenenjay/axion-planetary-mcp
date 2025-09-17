@@ -36,11 +36,14 @@ const CropClassificationSchema = z.object({
   startDate: z.string().optional().describe('Start date for imagery in YYYY-MM-DD format. Default: 6 months ago'),
   endDate: z.string().optional().describe('End date for imagery in YYYY-MM-DD format. Default: current date'),
   
-  // Training data
+// Training data
   trainingData: z.union([
     z.array(TrainingPointSchema),
     z.string() // Path to training data file
   ]).optional().describe('Optional custom training points. If not provided, uses default training data for the specified state'),
+  
+  // Ground truth data path for loading from file
+  groundTruthPath: z.string().optional().describe('Path to ground truth JSON/CSV file for training data'),
   
   // Classification parameters
   classifier: z.enum(['randomForest', 'svm', 'cart', 'naiveBayes']).optional().describe('Machine learning classifier. Default: randomForest (best accuracy)'),
@@ -476,14 +479,47 @@ function getDefaultClassInfo(stateName: string): { definitions: Record<string, s
 }
 
 /**
+ * Load ground truth data from file
+ */
+function loadGroundTruthFromFile(filePath: string): any[] {
+  try {
+    // Try to load the file if it exists
+    const fs = require('fs');
+    const path = require('path');
+    
+    // Resolve the file path
+    const resolvedPath = path.resolve(filePath);
+    
+    if (fs.existsSync(resolvedPath)) {
+      const fileContent = fs.readFileSync(resolvedPath, 'utf8');
+      const data = JSON.parse(fileContent);
+      
+      // Extract training points from the ground truth data
+      if (data.training_points && Array.isArray(data.training_points)) {
+        return data.training_points.map((point: any) => ({
+          lat: point.location.lat,
+          lon: point.location.lon,
+          label: point.label,
+          class_name: point.crop_type
+        }));
+      }
+    }
+  } catch (error) {
+    console.log('Could not load ground truth file:', error);
+  }
+  return [];
+}
+
+/**
  * Main crop classification function
  */
-async function classifyCrops(params: CropClassificationParams) {
+async function classifyCrops(params: CropClassificationParams & { groundTruthPath?: string }) {
   const {
     region,
     startDate = '2024-06-01',
     endDate = '2024-08-31',
     trainingData,
+    groundTruthPath,
     classifier = 'randomForest',
     numberOfTrees = 100,
     seed = Date.now() % 100000,
@@ -518,10 +554,26 @@ async function classifyCrops(params: CropClassificationParams) {
     
     // Get training data
     let trainingPoints = trainingData;
-    if (!trainingPoints) {
+    
+    // Try to load from ground truth file if specified
+    if (!trainingPoints && groundTruthPath) {
+      // Use the standard Iowa ground truth path if specified
+      const groundTruthFile = groundTruthPath === 'iowa' 
+        ? 'C:\\Users\\Dhenenjay\\Downloads\\iowa-ground-truth.json'
+        : groundTruthPath;
+      
+      trainingPoints = loadGroundTruthFromFile(groundTruthFile);
+      
+      if (trainingPoints.length > 0) {
+        console.log(`Loaded ${trainingPoints.length} training points from ground truth file`);
+      }
+    }
+    
+    // Fall back to default training data if still no points
+    if (!trainingPoints || trainingPoints.length === 0) {
       trainingPoints = getDefaultTrainingData(stateName);
       if (trainingPoints.length === 0) {
-        throw new Error(`No default training data available for ${stateName}. Please provide custom training data.`);
+        throw new Error(`No training data available for ${stateName}. Please provide custom training data or specify groundTruthPath.`);
       }
     }
     
