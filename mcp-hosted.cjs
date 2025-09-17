@@ -422,6 +422,20 @@ async function handleMessage(message) {
       });
       break;
       
+    case 'prompts/list':
+      // We don't have prompts, return empty array
+      sendResponse(id, {
+        prompts: []
+      });
+      break;
+      
+    case 'resources/list':
+      // We don't have resources, return empty array
+      sendResponse(id, {
+        resources: []
+      });
+      break;
+      
     case 'tools/call':
       await handleToolCall(id, params);
       break;
@@ -435,23 +449,25 @@ async function handleMessage(message) {
 function sendResponse(id, result) {
   const response = {
     jsonrpc: '2.0',
-    id,
+    id: id !== undefined ? id : null,
     result
   };
-  console.log(JSON.stringify(response));
+  // Write directly to stdout with newline for proper JSON-RPC
+  process.stdout.write(JSON.stringify(response) + '\n');
 }
 
 // Send error response
 function sendError(id, code, message) {
   const response = {
     jsonrpc: '2.0',
-    id,
+    id: id !== undefined ? id : null,
     error: {
       code,
       message
     }
   };
-  console.log(JSON.stringify(response));
+  // Write directly to stdout with newline for proper JSON-RPC
+  process.stdout.write(JSON.stringify(response) + '\n');
 }
 
 // Make HTTPS request to hosted service
