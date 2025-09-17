@@ -5,42 +5,66 @@
  * Can be imported and customized for various use cases
  */
 
-// Import consolidated tools conditionally based on environment
-let callTool;
-try {
-    // Try to import server-utils first (for updated code)
-    const serverUtils = require('../mcp/server-utils');
-    callTool = serverUtils.callTool;
-} catch (e) {
-    // If import fails, create a stub that uses fetch to call the API
-    callTool = async (tool, args) => {
-        // In production, make direct API calls
-        if (typeof fetch !== 'undefined') {
+// Create a lazy-initialized callTool function
+let callTool = null;
+let initPromise = null;
+
+// Initialize callTool on first use
+async function getCallTool() {
+    if (callTool) return callTool;
+    
+    if (!initPromise) {
+        initPromise = (async () => {
             try {
-                const response = await fetch('/api/mcp/sse', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        method: 'tools/call',
-                        params: { tool, arguments: args }
-                    })
-                });
-                return await response.json();
-            } catch (error) {
-                console.error(`Error calling ${tool}:`, error);
-                return { success: false, error: error.message };
+                // In Next.js context, we can directly import and use the server-utils
+                const { callTool: serverCallTool } = await import('../mcp/server-utils.ts');
+                callTool = serverCallTool;
+                console.log('Using server-utils callTool');
+            } catch (e) {
+                console.log('Server-utils not available, using direct registry access');
+                
+                // Fallback: Import registry and tools directly
+                try {
+                    const { get } = await import('../mcp/registry.ts');
+                    
+                    // Import tools to ensure they're registered
+                    await import('../mcp/tools/consolidated/earth_engine_data.ts');
+                    await import('../mcp/tools/consolidated/earth_engine_process.ts');
+                    await import('../mcp/tools/consolidated/earth_engine_export.ts');
+                    
+                    callTool = async (tool, args) => {
+                        const toolInstance = get(tool);
+                        if (toolInstance) {
+                            return await toolInstance.handler(args);
+                        }
+                        return { 
+                            success: false, 
+                            error: `Tool ${tool} not found` 
+                        };
+                    };
+                } catch (error) {
+                    console.error('Failed to setup callTool:', error);
+                    // Final fallback
+                    callTool = async () => ({ 
+                        success: false, 
+                        error: 'Tool system not available' 
+                    });
+                }
             }
-        }
-        // Fallback for non-browser environments
-        return { success: false, error: 'callTool not available in this context' };
-    };
+        })();
+    }
+    
+    await initPromise;
+    return callTool;
 }
 
 // Helper function for Earth Engine API calls
 async function callEarthEngine(tool, args) {
     try {
-        // Call the consolidated tools directly without going through SSE
-        const result = await callTool(tool, args);
+        // Get the callTool function (lazy initialized)
+        const callToolFunc = await getCallTool();
+        // Call the consolidated tools directly
+        const result = await callToolFunc(tool, args);
         return result;
     } catch (error) {
         console.error(`Error calling ${tool}:`, error);
@@ -849,8 +873,18 @@ async function waterQualityMonitoring(options = {}) {
     return results;
 }
 
-// Export all models - CommonJS only for Next.js compatibility
-module.exports = {
+// Export all models - ES module format
+export {
+    wildfireRiskAssessment,
+    floodRiskAssessment,
+    agriculturalMonitoring,
+    deforestationDetection,
+    waterQualityMonitoring,
+    callEarthEngine
+};
+
+// Also export as default for compatibility
+export default {
     wildfireRiskAssessment,
     floodRiskAssessment,
     agriculturalMonitoring,
