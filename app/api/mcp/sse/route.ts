@@ -33,14 +33,32 @@ export async function POST(req: NextRequest) {
       userAgent: req.headers.get('user-agent') || undefined
     });
     
-    // Simply forward to the consolidated endpoint
+    // Extract tool and arguments from the MCP request format
+    let forwardBody;
+    if (body.method === 'tools/call' && body.params) {
+      // MCP format: { method: 'tools/call', params: { tool, arguments } }
+      forwardBody = {
+        tool: body.params.tool,
+        arguments: body.params.arguments || {}
+      };
+    } else if (body.tool && body.arguments) {
+      // Direct format: { tool, arguments }
+      forwardBody = body;
+    } else {
+      // Fallback: assume the entire body is the request
+      forwardBody = body;
+    }
+    
+    console.log('Forwarding to consolidated:', JSON.stringify(forwardBody, null, 2));
+    
+    // Forward to the consolidated endpoint
     const consolidatedUrl = new URL('/api/mcp/consolidated', req.url);
     const response = await fetch(consolidatedUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(forwardBody)
     });
     
     const result = await response.json();
