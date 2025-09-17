@@ -372,7 +372,7 @@ async function createMap(params: any) {
         
         // Get map ID and tile URL
         const mapIdResult = await new Promise((resolve, reject) => {
-          visualized.getMap({}, (result: any, error: any) => {
+          visualized.getMapId({}, (result: any, error: any) => {
             if (error) reject(error);
             else resolve(result);
           });
@@ -405,7 +405,7 @@ async function createMap(params: any) {
       
       // Get map ID and tile URL
       const mapIdResult = await new Promise((resolve, reject) => {
-        visualized.getMap({}, (result: any, error: any) => {
+        visualized.getMapId({}, (result: any, error: any) => {
           if (error) reject(error);
           else resolve(result);
         });
@@ -445,11 +445,11 @@ async function createMap(params: any) {
     
     mapCenter = mapCenter || [-98.5795, 39.8283]; // Default to US center
     
-    // Store map session
+    // Store map session (handle empty mapLayers)
     const session: MapSession = {
       id: mapId,
       input,
-      tileUrl: mapLayers[0].tileUrl, // Primary tile URL for backward compatibility
+      tileUrl: mapLayers.length > 0 ? mapLayers[0].tileUrl : '', // Primary tile URL for backward compatibility
       created: new Date(),
       region,
       layers: mapLayers,
@@ -465,6 +465,16 @@ async function createMap(params: any) {
     
     // Generate the map URL (use Render deployment)
     const mapUrl = `https://axion-planetary-mcp.onrender.com/map/${mapId}`;
+    
+    // Check if we have any layers
+    if (mapLayers.length === 0) {
+      return {
+        success: false,
+        operation: 'create',
+        error: 'No map layers could be created',
+        message: 'Failed to generate map tiles. Try creating a composite first with earth_engine_process tool.'
+      };
+    }
     
     return {
       success: true,
