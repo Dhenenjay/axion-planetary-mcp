@@ -44,10 +44,16 @@ const MapViewer: React.FC<MapViewerProps> = ({ mapData }) => {
   useEffect(() => {
     if (!mapContainer.current || mapInstance.current) return;
 
-    // Initialize map
+    // Ensure we have valid coordinates
+    const centerCoords = mapData?.metadata?.center || [-118.2437, 34.0522]; // Default to LA
+    const lat = centerCoords[1] || 34.0522;
+    const lng = centerCoords[0] || -118.2437;
+    const zoom = mapData?.metadata?.zoom || 10;
+
+    // Initialize map with validated coordinates
     const map = L.map(mapContainer.current, {
-      center: [mapData.metadata.center[1], mapData.metadata.center[0]], // Leaflet uses [lat, lng]
-      zoom: mapData.metadata.zoom,
+      center: [lat, lng], // Leaflet uses [lat, lng]
+      zoom: zoom,
       zoomControl: true,
       attributionControl: true
     });
@@ -137,10 +143,11 @@ const MapViewer: React.FC<MapViewerProps> = ({ mapData }) => {
         resetBtn.href = '#';
         resetBtn.onclick = (e) => {
           e.preventDefault();
-          map.setView(
-            [mapData.metadata.center[1], mapData.metadata.center[0]],
-            mapData.metadata.zoom
-          );
+          const resetCoords = mapData?.metadata?.center || [-118.2437, 34.0522];
+          const resetLat = resetCoords[1] || 34.0522;
+          const resetLng = resetCoords[0] || -118.2437;
+          const resetZoom = mapData?.metadata?.zoom || 10;
+          map.setView([resetLat, resetLng], resetZoom);
         };
 
         // Info button

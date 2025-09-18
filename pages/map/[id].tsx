@@ -51,6 +51,24 @@ export default function MapViewerPage() {
       })
       .then(data => {
         console.log('Map data from API:', data);
+        // Validate the data structure
+        if (!data.metadata) {
+          data.metadata = {
+            center: [-118.2437, 34.0522], // Default LA coordinates
+            zoom: 10,
+            basemap: 'satellite'
+          };
+        }
+        if (!data.metadata.center) {
+          data.metadata.center = [-118.2437, 34.0522];
+        }
+        if (!data.layers || data.layers.length === 0) {
+          data.layers = [{
+            name: 'Default Layer',
+            tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            visParams: {}
+          }];
+        }
         setMapData(data);
         setLoading(false);
       })
