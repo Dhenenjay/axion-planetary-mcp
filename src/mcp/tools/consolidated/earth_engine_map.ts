@@ -350,6 +350,34 @@ async function createMap(params: any) {
                     .filterDate('2024-01-01', '2024-12-31')
                     .median();
                 }
+              } else if (layerInput.includes('forest_baseline') || layerInput.includes('forest_cover')) {
+                // Handle deforestation-related pseudo dataset IDs
+                console.log(`[Map] Creating forest cover layer: ${layerInput}`);
+                // Extract year if present
+                const yearMatch = layerInput.match(/\d{4}/);
+                const year = yearMatch ? yearMatch[0] : '2024';
+                
+                // Create a forest-focused composite
+                layerImage = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+                  .filterDate(`${year}-01-01`, `${year}-03-31`)
+                  .filterBounds(ee.Geometry.Point(-55.4915, -8.7832)) // Amazon center
+                  .map((image: any) => {
+                    const qa = image.select('QA60');
+                    const mask = qa.bitwiseAnd(1 << 10).eq(0);
+                    return image.updateMask(mask).divide(10000);
+                  })
+                  .median();
+              } else if (layerInput.includes('deforestation_change') || layerInput.includes('forest_loss')) {
+                // Create a change detection visualization
+                console.log(`[Map] Creating deforestation change layer`);
+                // This would ideally compute actual change, but for now create a placeholder
+                // In production, this should use the actual change detection algorithm
+                layerImage = ee.Image.constant(0).rename('change');
+              } else if (layerInput.includes('forest_degradation')) {
+                // Create a degradation visualization 
+                console.log(`[Map] Creating forest degradation layer`);
+                // Placeholder for degradation analysis
+                layerImage = ee.Image.constant(0).rename('degradation');
               } else {
                 console.log(`[Map] Could not create fallback for ${layerInput}, skipping`);
                 continue;

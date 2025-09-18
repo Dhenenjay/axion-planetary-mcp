@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
   
   try {
+    // Ensure Earth Engine is initialized before processing any request
+    await ensureEEInitialized();
+    
     const body = await req.json();
     console.log('SSE endpoint received:', JSON.stringify(body, null, 2));
     

@@ -775,14 +775,27 @@ async function deforestationDetection(options = {}) {
             }
         }
         
-        // Add visualization data
+        // Add visualization data with dataset mapping
         results.visualizationReady = true;
         results.mapData = {
             baselineComposite: results.composites.baseline,
             currentComposite: results.composites.current,
             region: config.region,
             center: { lat: -8.7832, lng: -55.4915 },  // Default to Amazon center
-            zoom: 5
+            zoom: 5,
+            // Provide dataset mappings for visualization
+            datasets: [
+                {
+                    name: `Forest Cover ${config.baselineStart.substring(0,4)}`,
+                    datasetId: results.composites.baseline || 'COPERNICUS/S2_SR_HARMONIZED',
+                    description: 'Baseline forest coverage'
+                },
+                {
+                    name: `Forest Cover ${config.currentStart.substring(0,4)}`,
+                    datasetId: results.composites.current || 'COPERNICUS/S2_SR_HARMONIZED',
+                    description: 'Current forest coverage'
+                }
+            ]
         };
         
         if (results.deforestation.percentLoss > threshold.critical) {

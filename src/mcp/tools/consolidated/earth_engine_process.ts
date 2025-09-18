@@ -619,10 +619,41 @@ async function calculateIndex(params: any) {
       throw new Error(`Unsupported index type: ${indexType}`);
   }
   
-  // Clip to region if provided
+  // Clip to region if provided and calculate mean value
+  let meanValue = null;
+  
   if (region) {
     const geometry = await parseAoi(region);
     index = index.clip(geometry);
+    
+    // Calculate mean value for the region
+    try {
+      const stats = index.reduceRegion({
+        reducer: ee.Reducer.mean(),
+        geometry: geometry,
+        scale: 30,
+        maxPixels: 1e9
+      });
+      
+      const statsResult = await new Promise((resolve, reject) => {
+        stats.evaluate((result: any, error: any) => {
+          if (error) {
+            console.error('Error calculating mean value:', error);
+            resolve(null);
+          } else {
+            resolve(result);
+          }
+        });
+      });
+      
+      // Extract the mean value from the result
+      if (statsResult && typeof statsResult === 'object') {
+        // The key will be the index name (e.g., 'NDVI', 'NDWI', etc.)
+        meanValue = statsResult[indexType] || statsResult[Object.keys(statsResult)[0]];
+      }
+    } catch (error) {
+      console.error('Error computing index statistics:', error);
+    }
   }
   
   // Store index result
@@ -636,6 +667,7 @@ async function calculateIndex(params: any) {
     bands: bands,
     message: `Calculated ${indexType} successfully`,
     result: index,
+    value: meanValue,  // Add the numeric mean value
     visualization,
     interpretation,
     nextSteps: `Use thumbnail operation with the ${indexKey} and visualization parameters to see the ${indexType} map`
