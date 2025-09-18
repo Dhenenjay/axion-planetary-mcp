@@ -6,6 +6,7 @@ import './consolidated/earth_engine_process';  // Processing: NDVI, NDWI, thumbn
 import './consolidated/earth_engine_export';   // Export operations: toAsset, toDrive, toGCS
 import './consolidated/earth_engine_map';      // Interactive map viewer for large regions
 import './consolidated/crop_classification';   // Crop classification: build, train, visualize models
+import './consolidated/deforestation_analysis'; // Enhanced deforestation detection with change maps
 
 // Legacy tool imports commented out - replaced by consolidated tools above
 // import './auth_check';
