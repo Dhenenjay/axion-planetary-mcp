@@ -285,6 +285,36 @@ export async function parseAoi(aoi: any): Promise<any> {
       // Not valid JSON, continue with other checks
     }
     
+    // Check if it looks like a bounding box (e.g., "south, west, north, east" or "ymin, xmin, ymax, xmax")
+    const bboxMatch = aoi.match(/^\s*(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)\s*$/);
+    if (bboxMatch) {
+      const val1 = parseFloat(bboxMatch[1]);
+      const val2 = parseFloat(bboxMatch[2]);
+      const val3 = parseFloat(bboxMatch[3]);
+      const val4 = parseFloat(bboxMatch[4]);
+      
+      // Determine if it's (south, west, north, east) or (west, south, east, north)
+      // Typically latitudes are -90 to 90, longitudes are -180 to 180
+      let west, south, east, north;
+      
+      // If first and third values are within latitude range, assume format is (south, west, north, east)
+      if (Math.abs(val1) <= 90 && Math.abs(val3) <= 90) {
+        south = val1;
+        west = val2;
+        north = val3;
+        east = val4;
+      } else {
+        // Otherwise assume (west, south, east, north)
+        west = val1;
+        south = val2;
+        east = val3;
+        north = val4;
+      }
+      
+      console.log(`Parsing bounding box: west=${west}, south=${south}, east=${east}, north=${north}`);
+      return ee.Geometry.Rectangle([west, south, east, north]);
+    }
+    
     // Check if it looks like coordinates (e.g., "-118.2437, 34.0522")
     const coordMatch = aoi.match(/^\s*(-?\d+\.?\d*),\s*(-?\d+\.?\d*)\s*$/);
     if (coordMatch) {
