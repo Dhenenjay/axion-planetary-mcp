@@ -37,7 +37,7 @@ const ProcessToolSchema = z.object({
   formula: z.string().optional(),
   
   // Analyze operation params
-  analysisType: z.enum(['statistics', 'timeseries', 'change', 'zonal']).optional(),
+  analyzeType: z.enum(['statistics', 'timeseries', 'change', 'zonal']).optional(),
   reducer: z.enum(['mean', 'median', 'max', 'min', 'stdDev', 'sum', 'count']).optional(),
   zones: z.any().optional(),
   
@@ -632,7 +632,8 @@ async function calculateIndex(params: any) {
         reducer: ee.Reducer.mean(),
         geometry: geometry,
         scale: 30,
-        maxPixels: 1e9
+        maxPixels: 1e13,
+        bestEffort: true
       });
       
       const statsResult = await new Promise((resolve, reject) => {
@@ -760,7 +761,8 @@ async function runWildfireModel(params: any) {
       }),
       geometry: geometry,
       scale: scale,
-      maxPixels: 1e9
+      maxPixels: 1e13,
+      bestEffort: true
     });
     
     const statsResult = await new Promise((resolve, reject) => {
@@ -1096,7 +1098,9 @@ async function runAgricultureModel(params: any) {
         .lt(baseComposite.select('CVI').reduceRegion({
           reducer: ee.Reducer.percentile([25]),
           geometry: geometry,
-          scale: scale
+          scale: scale,
+          maxPixels: 1e13,
+          bestEffort: true
         }))
         .rename('chlorophyll_stress');
       

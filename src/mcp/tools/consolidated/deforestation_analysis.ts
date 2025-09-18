@@ -90,7 +90,8 @@ async function calculateForestCover(region: string, year: number, startMonth: st
       reducer: ee.Reducer.sum(),
       geometry: geometry,
       scale: 30,
-      maxPixels: 1e10
+      maxPixels: 1e13,
+      bestEffort: true
     });
     
     // Store composite for visualization
@@ -194,14 +195,16 @@ async function analyzeDeforestation(params: z.infer<typeof DeforestationSchema>)
       reducer: ee.Reducer.sum(),
       geometry: geometry,
       scale: 30,
-      maxPixels: 1e10
+      maxPixels: 1e13,
+      bestEffort: true
     });
     
     const gainArea = forestGain.multiply(pixelArea).reduceRegion({
       reducer: ee.Reducer.sum(),
       geometry: geometry,
       scale: 30,
-      maxPixels: 1e10
+      maxPixels: 1e13,
+      bestEffort: true
     });
     
     const lossStats = await lossArea.evaluate();
