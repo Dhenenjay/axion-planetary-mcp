@@ -555,10 +555,19 @@ map.addSource('earth-engine', {
     'tileSize': 256
 });`;
     
+    // Generate the viewable URL - use deployment URL if available
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || 
+                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+                    process.env.NEXT_PUBLIC_URL || 
+                    process.env.PUBLIC_URL || 
+                    'https://axion-planetary-mcp.onrender.com';  // Your Render deployment URL
+    const viewUrl = `${baseUrl}/map/${mapId}`;
+    
     return {
       success: true,
       operation: 'create',
       mapId,
+      viewUrl,  // ADD THIS: Direct URL to view the interactive map
       tileUrl: mapLayers[0].tileUrl,
       layers: mapLayers.map(l => ({
         name: l.name,
@@ -569,14 +578,17 @@ map.addSource('earth-engine', {
       center: mapCenter,
       zoom,
       basemap,
-      instructions: 'Use the tile URLs with any web mapping library (Leaflet, Mapbox GL, Google Maps, etc.)',
+      viewableAt: viewUrl,  // ADD THIS: Duplicate for clarity
+      instructions: `View your interactive map at: ${viewUrl}`,
       usage: {
+        interactive: `Open in browser: ${viewUrl}`,
         leaflet: leafletExample,
         mapbox: mapboxExample,
         direct: `Direct tile URL (XYZ format): ${mapLayers[0].tileUrl}`,
         note: 'Replace {z}, {x}, {y} with zoom level and tile coordinates'
       },
       features: [
+        'Interactive web viewer available',
         'Earth Engine processed imagery',
         'XYZ tile format compatible with most mapping libraries',
         'Global coverage based on your specified region',
