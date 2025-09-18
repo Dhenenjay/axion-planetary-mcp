@@ -663,7 +663,9 @@ async function deforestationDetection(options = {}) {
         deforestation: {},
         degradation: {},
         carbonLoss: null,
-        alerts: []
+        alerts: [],
+        composites: {},  // Store composite IDs for visualization
+        recommendations: []
     };
     
     try {
@@ -692,6 +694,14 @@ async function deforestationDetection(options = {}) {
         if (baselineNDVI.success && currentNDVI.success) {
             results.forestCover.baseline = baselineNDVI.value;
             results.forestCover.current = currentNDVI.value;
+            
+            // Store composite IDs for visualization
+            if (baselineNDVI.compositeId) {
+                results.composites.baseline = baselineNDVI.compositeId;
+            }
+            if (currentNDVI.compositeId) {
+                results.composites.current = currentNDVI.compositeId;
+            }
             
             const loss = baselineNDVI.value - currentNDVI.value;
             results.deforestation.percentLoss = (loss / baselineNDVI.value) * 100;
@@ -742,12 +752,38 @@ async function deforestationDetection(options = {}) {
             results.changeDetection = changeResult;
         }
         
-        // Generate alerts and recommendations based on sensitivity and loss
-        const threshold = {
-            high: { critical: 5, warning: 2 },
-            medium: { critical: 10, warning: 5 },
-            low: { critical: 20, warning: 10 }
-        }[config.sensitivity] || { critical: 10, warning: 5 };
+        // Generate recommendations based on deforestation level
+        if (results.deforestation.percentLoss > 0) {
+            if (results.deforestation.percentLoss > 15) {
+                results.recommendations.push(
+                    'Urgent: Implement immediate forest protection measures',
+                    'Deploy ground teams for verification',
+                    'Contact local authorities and conservation groups',
+                    'Consider satellite-based real-time monitoring'
+                );
+            } else if (results.deforestation.percentLoss > 5) {
+                results.recommendations.push(
+                    'Increase monitoring frequency',
+                    'Investigate potential causes (logging, agriculture, fires)',
+                    'Implement preventive measures in high-risk areas'
+                );
+            } else {
+                results.recommendations.push(
+                    'Continue regular monitoring',
+                    'Document changes for long-term analysis'
+                );
+            }
+        }
+        
+        // Add visualization data
+        results.visualizationReady = true;
+        results.mapData = {
+            baselineComposite: results.composites.baseline,
+            currentComposite: results.composites.current,
+            region: config.region,
+            center: { lat: -8.7832, lng: -55.4915 },  // Default to Amazon center
+            zoom: 5
+        };
         
         if (results.deforestation.percentLoss > threshold.critical) {
             results.recommendations = [

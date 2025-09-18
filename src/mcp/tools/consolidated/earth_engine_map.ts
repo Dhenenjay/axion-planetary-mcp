@@ -312,6 +312,44 @@ async function createMap(params: any) {
                     return image.updateMask(mask).divide(10000);
                   })
                   .median();
+              } else if (layerInput === 'COPERNICUS/S2_SR_HARMONIZED' || layerInput.startsWith('COPERNICUS/')) {
+                // Handle standard Earth Engine dataset IDs
+                console.log(`[Map] Creating image from Earth Engine dataset: ${layerInput}`);
+                
+                // Check if it's an ImageCollection or Image
+                if (layerInput.includes('S2') || layerInput.includes('LANDSAT')) {
+                  // It's likely an ImageCollection - create a composite
+                  layerImage = ee.ImageCollection(layerInput)
+                    .filterDate('2024-01-01', '2024-12-31')
+                    .filterBounds(ee.Geometry.Point(-55.4915, -8.7832)) // Amazon center
+                    .median();
+                  
+                  // Apply scaling for known datasets
+                  if (layerInput.includes('S2_SR')) {
+                    layerImage = layerImage.divide(10000); // Scale Sentinel-2 SR values
+                  } else if (layerInput.includes('LANDSAT') && layerInput.includes('SR')) {
+                    layerImage = layerImage.multiply(0.0000275).add(-0.2); // Scale Landsat SR
+                  }
+                } else {
+                  // It's likely a single Image
+                  layerImage = ee.Image(layerInput);
+                }
+              } else if (layerInput.includes('UMD/hansen') || layerInput === 'UMD/hansen/global_forest_change_2023_v1_11') {
+                // Handle Hansen Forest Change dataset
+                console.log(`[Map] Creating Hansen forest change layer`);
+                layerImage = ee.Image('UMD/hansen/global_forest_change_2023_v1_11');
+              } else if (layerInput.includes('MODIS')) {
+                // Handle MODIS datasets
+                console.log(`[Map] Creating MODIS layer: ${layerInput}`);
+                if (layerInput.includes('MOD44B')) {
+                  layerImage = ee.ImageCollection(layerInput)
+                    .filterDate('2020-01-01', '2021-12-31')
+                    .first();
+                } else {
+                  layerImage = ee.ImageCollection(layerInput)
+                    .filterDate('2024-01-01', '2024-12-31')
+                    .median();
+                }
               } else {
                 console.log(`[Map] Could not create fallback for ${layerInput}, skipping`);
                 continue;
