@@ -668,6 +668,14 @@ async function deforestationDetection(options = {}) {
         recommendations: []
     };
     
+    // Define thresholds based on sensitivity - moved outside try block for scope
+    const thresholds = {
+        high: { critical: 5, warning: 2 },
+        medium: { critical: 10, warning: 5 },
+        low: { critical: 20, warning: 10 }
+    };
+    const threshold = thresholds[config.sensitivity] || thresholds.medium;
+    
     try {
         // Calculate baseline forest cover
         console.log('Analyzing baseline forest cover...');
@@ -706,15 +714,7 @@ async function deforestationDetection(options = {}) {
             const loss = baselineNDVI.value - currentNDVI.value;
             results.deforestation.percentLoss = (loss / baselineNDVI.value) * 100;
             
-            // Adjust thresholds based on sensitivity
-            const thresholds = {
-                high: { critical: 5, warning: 2 },
-                medium: { critical: 10, warning: 5 },
-                low: { critical: 20, warning: 10 }
-            };
-            
-            const threshold = thresholds[config.sensitivity] || thresholds.medium;
-            
+            // Use the threshold defined at the function scope
             if (results.deforestation.percentLoss > threshold.critical) {
                 results.alerts.push({
                     type: 'CRITICAL',
