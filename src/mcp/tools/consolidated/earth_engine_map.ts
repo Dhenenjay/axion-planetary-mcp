@@ -555,12 +555,12 @@ map.addSource('earth-engine', {
     'tileSize': 256
 });`;
     
-    // Generate the viewable URL - use deployment URL if available
-    const baseUrl = process.env.RENDER_EXTERNAL_URL || 
-                    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-                    process.env.NEXT_PUBLIC_URL || 
-                    process.env.PUBLIC_URL || 
-                    'https://axion-planetary-mcp.onrender.com';  // Your Render deployment URL
+    // Generate the viewable URL - Always use Render deployment URL in production
+    // In development, use localhost:3000
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const baseUrl = isDevelopment 
+                    ? 'http://localhost:3000'
+                    : 'https://axion-planetary-mcp.onrender.com';  // Your Render deployment URL
     const viewUrl = `${baseUrl}/map/${mapId}`;
     
     return {
