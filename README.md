@@ -21,6 +21,60 @@
 
 ---
 
+## ⚡ Hosted Version (1 min setup!)
+
+**Want to start using Earth Engine immediately without any server setup?** Use the hosted version through **axion-mcp-bridge**!
+
+### 🚀 Quick Start - Zero Configuration
+
+1. **Install the bridge globally:**
+   ```bash
+   npm install -g axion-mcp-bridge
+   ```
+
+2. **Add to your MCP client configuration:**
+
+   **For Claude Desktop:**
+   ```json
+   {
+     "mcpServers": {
+       "axion-earth-engine": {
+         "command": "axion-mcp"
+       }
+     }
+   }
+   ```
+   
+   **That's it!** No environment variables, no credentials setup, no server to run. The bridge handles everything.
+
+3. **Restart Claude Desktop** and start using Earth Engine!
+
+### ✨ Why Use the Hosted Version?
+
+- **🚀 1-minute setup** - Just install and add config
+- **☁️ No server management** - Everything runs in the cloud
+- **🔒 No credentials needed** - Secure proxy handles authentication
+- **⚡ Always up-to-date** - Latest features automatically
+- **🌍 Full Earth Engine access** - All satellite data and tools available
+- **💻 Zero maintenance** - No processes to manage
+
+### 📦 More Details
+
+- **NPM Package**: [axion-mcp-bridge](https://www.npmjs.com/package/axion-mcp-bridge)
+- **Server Status**: Always online at `https://axion-mcp.onrender.com`
+- **No Google Cloud setup required** - We handle the authentication
+- **Works with any MCP client** - Claude Desktop, Cursor, VS Code, etc.
+
+### 🎯 Try It Now!
+
+Once configured, just ask:
+- "Show me vegetation health in California"
+- "Create a water map of the Nile River"
+- "Analyze urban growth in Tokyo"
+- "Monitor deforestation in the Amazon"
+
+---
+
 ## 🎯 The Geospatial AI Revolution
 
 **We are witnessing the "iPhone moment" for Earth observation.** Just like the iPhone made computing accessible to everyone, Axion Planetary MCP makes petabytes of satellite data accessible through simple conversation.
@@ -144,9 +198,9 @@ Once this gains traction, it creates a **virtuous cycle**:
 - ✅ **4GB RAM** minimum (8GB recommended)
 - ✅ **2GB free disk space**
 
-## ⚡ Installation - Join the Revolution
+## 📦 Local Installation (Self-Hosted Setup)
 
-**Transform your AI assistant into a geospatial powerhouse in under 5 minutes:**
+**Want to run your own server locally?** Follow these steps to set up the full package:
 
 ### Option 1: Global Installation (Recommended)
 
