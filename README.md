@@ -34,16 +34,35 @@
 
 2. **Add to your MCP client configuration:**
 
-   **For Claude Desktop:**
+   **For Claude Desktop (Windows):**
    ```json
    {
      "mcpServers": {
-       "axion-earth-engine": {
-         "command": "axion-mcp"
+       "axion-mcp": {
+         "command": "node",
+         "args": [
+           "C:\\Users\\YourUsername\\AppData\\Roaming\\npm\\node_modules\\axion-mcp-bridge\\bridge.js"
+         ]
        }
      }
    }
    ```
+   
+   **For Mac/Linux:**
+   ```json
+   {
+     "mcpServers": {
+       "axion-mcp": {
+         "command": "node",
+         "args": [
+           "/usr/local/lib/node_modules/axion-mcp-bridge/bridge.js"
+         ]
+       }
+     }
+   }
+   ```
+   
+   To find your exact path, run: `npm root -g` and add `/axion-mcp-bridge/bridge.js`
    
    **That's it!** No environment variables, no credentials setup, no server to run. The bridge handles everything.
 
