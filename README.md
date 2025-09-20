@@ -21,7 +21,7 @@
 
 ---
 
-## ⚡ Hosted Version (1 min setup!)
+## ⚡ Hosted Version (1 min setup!) (Note: The MCP Client may show some errors, but that's just internal validation failure by the client, so everything will work nonetheless)
 
 **Want to start using Earth Engine immediately without any server setup?** Use the hosted version through **axion-mcp-bridge**!
 
