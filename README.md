@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌍 Axion Planetary MCP
+# 🌍 Axion Planetary MCP (Building an MCP Client as well due to schema errors with clients)
 ## *The Foundation for Democratizing Geospatial AI Agents*
 
 <img src="https://img.shields.io/npm/v/axion-planetary-mcp?style=for-the-badge&color=blue" alt="npm version" />
