@@ -3,6 +3,10 @@
 # 🌍 Axion Planetary MCP (Building an MCP Client as well due to schema errors with clients)
 ## *The Foundation for Democratizing Geospatial AI Agents*
 
+[![Watch the demo](https://img.youtube.com/vi/cd8twnn6en8/maxresdefault.jpg)](https://www.youtube.com/watch?v=cd8twnn6en8)
+
+*Click the image above to watch the demo video*
+
 <img src="https://img.shields.io/npm/v/axion-planetary-mcp?style=for-the-badge&color=blue" alt="npm version" />
 <img src="https://img.shields.io/npm/dm/axion-planetary-mcp?style=for-the-badge&color=green" alt="downloads" />
 <img src="https://img.shields.io/github/license/Dhenenjay/axion-planetary-mcp?style=for-the-badge&color=orange" alt="license" />
