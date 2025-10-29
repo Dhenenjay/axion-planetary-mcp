@@ -1,0 +1,27 @@
+# DEPRECATED - Migrating to AWS
+# This file is kept for reference during migration
+# Date: 2025-10-29
+
+runtime: nodejs18
+service: default
+instance_class: F2
+
+env_variables:
+  NODE_ENV: production
+  CLOUD_PROVIDER: gcp
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always
+
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.65
+
+# MIGRATION NOTE:
+# This App Engine config is being replaced by:
+# - AWS Lambda for serverless functions
+# - AWS ECS for containerized services
+# - AWS Elastic Beanstalk for traditional apps
