@@ -1,0 +1,31 @@
+{
+  "CallerReference": "axion-planetary-cdn-2025",
+  "Comment": "CloudFront distribution for Axion Planetary (migrated from GCP Cloud CDN)",
+  "Enabled": true,
+  "DefaultRootObject": "index.html",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "S3-axion-planetary-assets",
+        "DomainName": "axion-planetary-assets-production.s3.amazonaws.com",
+        "S3OriginConfig": {
+          "OriginAccessIdentity": ""
+        }
+      }
+    ]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "S3-axion-planetary-assets",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "AllowedMethods": {
+      "Quantity": 2,
+      "Items": ["GET", "HEAD"]
+    },
+    "Compress": true,
+    "MinTTL": 0,
+    "DefaultTTL": 86400,
+    "MaxTTL": 31536000
+  },
+  "PriceClass": "PriceClass_100"
+}
