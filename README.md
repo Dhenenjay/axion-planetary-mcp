@@ -24,7 +24,7 @@
 *Click the image above to watch the demo video*
 
 <img src="https://img.shields.io/npm/v/axion-planetary-mcp?style=for-the-badge&color=blue" alt="npm version" />
-<img src="https://img.shields.io/endpoint?url=https://axion-mcp.onrender.com/api/badge/downloads&style=for-the-badge" alt="downloads" />
+<img src="https://img.shields.io/npm/dm/axion-planetary-mcp?style=for-the-badge&color=green" alt="downloads" />
 <img src="https://img.shields.io/github/license/Dhenenjay/axion-planetary-mcp?style=for-the-badge&color=orange" alt="license" />
 <img src="https://img.shields.io/badge/Foundation%20Model-Powered-red?style=for-the-badge" alt="foundation model" />
 <img src="https://img.shields.io/badge/MCP-Compatible-purple?style=for-the-badge" alt="mcp compatible" />
