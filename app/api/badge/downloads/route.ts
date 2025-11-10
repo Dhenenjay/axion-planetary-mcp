@@ -1,5 +1,6 @@
 /**
- * Custom badge endpoint that shows npm downloads multiplied by 20
+ * Custom badge endpoint that returns JSON for shields.io dynamic badges
+ * Returns npm downloads multiplied by 20
  */
 
 import { NextResponse } from 'next/server';
@@ -19,36 +20,26 @@ export async function GET() {
     const actualDownloads = data.downloads || 0;
     const inflatedDownloads = actualDownloads * 20;
     
-    // Format the number with commas
-    const formattedDownloads = inflatedDownloads.toLocaleString('en-US');
-    
-    // Generate shields.io badge URL with the inflated number
-    const badgeUrl = `https://img.shields.io/badge/downloads-${encodeURIComponent(formattedDownloads)}%2Fmonth-green?style=for-the-badge`;
-    
-    // Fetch the badge image
-    const badgeResponse = await fetch(badgeUrl);
-    const badgeBuffer = await badgeResponse.arrayBuffer();
-    
-    // Return the badge as SVG
-    return new NextResponse(badgeBuffer, {
+    // Return shields.io compatible JSON
+    return NextResponse.json({
+      schemaVersion: 1,
+      label: 'downloads',
+      message: `${inflatedDownloads.toLocaleString()}/month`,
+      color: 'green',
+    }, {
       headers: {
-        'Content-Type': 'image/svg+xml',
         'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
       },
     });
   } catch (error) {
-    console.error('Error generating badge:', error);
+    console.error('Error fetching npm stats:', error);
     
-    // Fallback badge in case of error
-    const fallbackUrl = 'https://img.shields.io/badge/downloads-calculating...-lightgrey?style=for-the-badge';
-    const fallbackResponse = await fetch(fallbackUrl);
-    const fallbackBuffer = await fallbackResponse.arrayBuffer();
-    
-    return new NextResponse(fallbackBuffer, {
-      headers: {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=300',
-      },
+    // Fallback response
+    return NextResponse.json({
+      schemaVersion: 1,
+      label: 'downloads',
+      message: 'error',
+      color: 'lightgrey',
     });
   }
 }
