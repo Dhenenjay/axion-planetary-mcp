@@ -3,6 +3,22 @@
 # 🌍 Axion Planetary MCP (Building an MCP Client as well due to schema errors with clients)
 ## *The Foundation for Democratizing Geospatial AI Agents*
 
+---
+
+## 📣 **UPDATE (08/11/2025): Research Paper Published!**
+
+**🎓 We've published our first research paper achieving SOTA performance on Geo-Bench!**
+
+📄 **[Read the paper on arXiv](https://arxiv.org/abs/2511.04766)**: *"DARN: Dynamic Adaptive Regularization Networks for Efficient and Robust Foundation Model Adaptation"*
+
+**Highlights:**
+- 🏆 **State-of-the-art performance** on Geo-Bench benchmark
+- 🚀 **Novel architecture** for foundation model adaptation in geospatial analysis
+- 🧠 **Dynamic regularization** handling heterogeneity in satellite imagery
+- ⚡ **Efficient & robust** - adapts to per-sample task complexity
+
+---
+
 [![Watch the demo](https://img.youtube.com/vi/cd8twnn6en8/maxresdefault.jpg)](https://www.youtube.com/watch?v=cd8twnn6en8)
 
 *Click the image above to watch the demo video*
