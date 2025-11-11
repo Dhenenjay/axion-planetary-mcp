@@ -5,6 +5,19 @@
 
 ---
 
+## 🚨 **EXCLUSIVE: Axion Foundation Model - Hosted MCP Only**
+
+> **🛰️ World's First Petabyte-Scale SAR-to-Optical Foundation Model**  
+> **86.66% mIoU Accuracy | CVPR 2026 Under Review**
+>
+> Our breakthrough **Axion foundation model** transforms SAR radar imagery into crystal-clear optical views—**seeing through clouds 24/7**. This state-of-the-art model (TerraMind encoder + DARN adaptive decoder) achieves **+5.56 points improvement** over all existing architectures.
+>
+> ⚠️ **IMPORTANT:** The full Axion foundation model with complete SAR-to-Optical processing, multi-modal outputs (RGB, DEM, LULC, NDVI), and AI agent integration is **EXCLUSIVELY available through our hosted MCP server**.
+>
+> **🚀 [Access via Hosted MCP](#-hosted-version-1-min-setup-note-the-mcp-client-may-show-some-errors-but-thats-just-internal-validation-failure-by-the-client-so-everything-will-work-nonetheless)** • **📄 [Research Paper](https://arxiv.org/abs/2511.04766)** • **🌐 [Learn More](https://axionorbital.space)**
+
+---
+
 ## 📣 **UPDATE (08/11/2025): Research Paper Published!**
 
 **🎓 We've published our first research paper achieving SOTA performance on Geo-Bench!**
