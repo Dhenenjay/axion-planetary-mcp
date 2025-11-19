@@ -1,0 +1,1 @@
+export const DUCKDB_EXTENSIONS = ['spatial', 'parquet', 'json'];
