@@ -1,0 +1,1 @@
+export const GEOSPATIAL_SCHEMA = `CREATE TABLE satellite_data (id INT)`;
