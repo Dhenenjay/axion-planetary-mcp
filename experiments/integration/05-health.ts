@@ -1,0 +1,1 @@
+console.log('Health check test');
