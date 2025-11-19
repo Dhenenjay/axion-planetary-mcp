@@ -1,0 +1,1 @@
+export { DuckDBClient } from './client';
