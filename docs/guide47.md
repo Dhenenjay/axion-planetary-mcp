@@ -1,0 +1,1 @@
+# Guide 47\n\nThis guide covers feature 47.
