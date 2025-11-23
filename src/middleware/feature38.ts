@@ -1,0 +1,1 @@
+// Middleware feature 38\nexport function middleware38() {}
