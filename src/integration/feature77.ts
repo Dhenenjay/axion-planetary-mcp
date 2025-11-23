@@ -1,0 +1,1 @@
+// Integration feature 77\nexport const feature77 = {\n  enabled: true\n};
