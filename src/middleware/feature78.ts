@@ -1,0 +1,1 @@
+// Middleware feature 78\nexport function middleware78() {}
