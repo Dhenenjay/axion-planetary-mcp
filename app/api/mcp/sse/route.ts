@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
+import { withRateLimit } from '@/src/middleware/apply-rate-limit';
 import { initEarthEngineWithSA } from '@/src/gee/client';
 
 export const runtime = 'nodejs';
 
-// Initialize Earth Engine once
 let eeInitialized = false;
 async function ensureEEInitialized() {
   if (!eeInitialized) {
@@ -12,18 +12,15 @@ async function ensureEEInitialized() {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function handleRequest(req: NextRequest) {
   try {
     const body = await req.json();
     console.log('SSE endpoint received:', JSON.stringify(body, null, 2));
     
-    // Simply forward to the consolidated endpoint
     const consolidatedUrl = new URL('/api/mcp/consolidated', req.url);
     const response = await fetch(consolidatedUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     
@@ -36,6 +33,10 @@ export async function POST(req: NextRequest) {
       stack: error.stack 
     }, { status: 500 });
   }
+}
+
+export async function POST(req: NextRequest) {
+  return withRateLimit(req, handleRequest);
 }
 
 export async function GET(_req: NextRequest) {
