@@ -5,7 +5,7 @@
 
 ---
 
-## 🚨 **EXCLUSIVE: Axion Foundation Model - Hosted MCP Only**
+## 🚨 **EXCLUSIVE: Axion Foundation Model - Hosted MCP Only** (Currently in maintenance, all other tools available except optical generation)
 
 > **🛰️ World's First Petabyte-Scale SAR-to-Optical Foundation Model**  
 > **86.66% mIoU Accuracy | CVPR 2026 Under Review**
