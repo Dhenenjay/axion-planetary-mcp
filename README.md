@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌍 Axion Planetary MCP (Building an MCP Client as well due to schema errors with clients)
+# 🌍 Axion Planetary MCP
 ## *The Foundation for Democratizing Geospatial AI Agents*
 
 ---
