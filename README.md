@@ -41,7 +41,12 @@
 
 #### Step 1: Get Your API Key
 
-[**Request an API key here →**](https://github.com/Dhenenjay/Axion-MCP-SSE/issues/new?title=API%20Key%20Request&body=Please%20provide%20me%20an%20API%20key%20for%20Axion%20MCP)
+**Try it now with this starter key:**
+```
+axion_6C1D_634DDAEAA324235F
+```
+
+**Need your own key?** Email **dhenenjay.2001@gmail.com** or [open an issue](https://github.com/Dhenenjay/Axion-MCP-SSE/issues/new?title=API%20Key%20Request&body=Please%20provide%20me%20an%20API%20key%20for%20Axion%20MCP)
 
 #### Step 2: Configure Claude Desktop
 
