@@ -1,1 +1,0 @@
-# Guide 67\n\nThis guide covers feature 67.

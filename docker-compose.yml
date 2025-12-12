@@ -1,0 +1,32 @@
+services:
+  planetary-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: planetary-mcp
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/ee-key.json
+      - GCS_BUCKET=${GCS_BUCKET:-earth-engine-exports}
+      - DISABLE_THUMBNAILS=${DISABLE_THUMBNAILS:-true}
+    volumes:
+      # Mount credentials directory
+      - ./credentials:/app/credentials:ro
+      # Optional: Mount for persistent data
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - planetary-network
+
+networks:
+  planetary-network:
+    driver: bridge

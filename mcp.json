@@ -1,0 +1,168 @@
+{
+  "name": "earth-engine-mcp",
+  "version": "1.0.0",
+  "description": "Earth Engine MCP Server with Geospatial Analysis Tools",
+  "server": {
+    "command": "node",
+    "args": ["src/index.js"],
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "tools": [
+    {
+      "name": "earth_engine_init",
+      "description": "Initialize Earth Engine connection",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "wildfire_risk_assessment",
+      "description": "Assess wildfire risk for a specified region using satellite data",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Region name (e.g., California, Paradise_CA)"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date in YYYY-MM-DD format"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date in YYYY-MM-DD format"
+          },
+          "indices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Vegetation indices to calculate (NDVI, NDWI, NBR, SAVI)"
+          }
+        },
+        "required": ["region"]
+      }
+    },
+    {
+      "name": "flood_risk_assessment",
+      "description": "Assess flood risk for urban, coastal, or riverine areas",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Region name (e.g., Houston, Miami)"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date in YYYY-MM-DD format"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date in YYYY-MM-DD format"
+          },
+          "floodType": {
+            "type": "string",
+            "enum": ["urban", "coastal", "riverine", "snowmelt"],
+            "description": "Type of flood to assess"
+          }
+        },
+        "required": ["region"]
+      }
+    },
+    {
+      "name": "agricultural_monitoring",
+      "description": "Monitor crop health and agricultural conditions",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Agricultural region (e.g., Iowa, California_Central_Valley)"
+          },
+          "cropType": {
+            "type": "string",
+            "description": "Type of crop (corn, wheat, soybeans, cotton)"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date in YYYY-MM-DD format"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date in YYYY-MM-DD format"
+          }
+        },
+        "required": ["region"]
+      }
+    },
+    {
+      "name": "deforestation_detection",
+      "description": "Detect and quantify forest loss between two time periods",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Forest region (e.g., Amazon, Congo, Yellowstone)"
+          },
+          "baselineStart": {
+            "type": "string",
+            "description": "Baseline period start date"
+          },
+          "baselineEnd": {
+            "type": "string",
+            "description": "Baseline period end date"
+          },
+          "currentStart": {
+            "type": "string",
+            "description": "Current period start date"
+          },
+          "currentEnd": {
+            "type": "string",
+            "description": "Current period end date"
+          }
+        },
+        "required": ["region"]
+      }
+    },
+    {
+      "name": "water_quality_monitoring",
+      "description": "Monitor water quality in lakes, rivers, and coastal areas",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Water body name (e.g., Lake_Tahoe, Lake_Erie)"
+          },
+          "startDate": {
+            "type": "string",
+            "description": "Start date in YYYY-MM-DD format"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "End date in YYYY-MM-DD format"
+          },
+          "waterBody": {
+            "type": "string",
+            "enum": ["lake", "river", "reservoir", "coastal"],
+            "description": "Type of water body"
+          }
+        },
+        "required": ["region"]
+      }
+    }
+  ],
+  "capabilities": {
+    "geospatial_analysis": true,
+    "earth_engine": true,
+    "satellite_data": true,
+    "environmental_monitoring": true
+  }
+}

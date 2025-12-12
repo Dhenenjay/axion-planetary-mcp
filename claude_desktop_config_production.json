@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "earth-engine": {
+      "command": "node",
+      "args": ["C:\\Users\\Dhenenjay\\earth-engine-mcp\\mcp-production-cjs.js"],
+      "env": {
+        "GEE_JSON_PATH": "C:\\Users\\Dhenenjay\\Downloads\\ee-key.json"
+      }
+    }
+  }
+}

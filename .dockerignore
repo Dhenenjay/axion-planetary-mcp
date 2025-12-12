@@ -1,0 +1,76 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Next.js
+.next
+out
+
+# Built files (we build inside Docker)
+dist
+dist-aws
+# Keep dist-sse if it exists locally
+
+# Testing
+test-results
+test-data
+*.test.js
+*.test.ts
+coverage
+
+# Environment
+.env.local
+.env.development
+.env.test
+.env*.local
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Credentials (will be mounted separately)
+credentials
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!tsconfig.aws.json
+!api-keys.json
+!tsup.config.ts
+
+# Vercel
+.vercel
+
+# Ground truth data (large files)
+ground-truth
+ground_truth_data
+
+# Test files
+test-*.js
+test-*.mjs
+test-*.ps1
+validation-report-*.json
+complete-test-report-*.json

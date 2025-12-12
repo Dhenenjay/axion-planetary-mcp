@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: axion-mcp
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      # API Key for authentication (set in Render dashboard)
+      - key: AXION_API_KEY
+        sync: false
+      # Google Cloud credentials (base64 encoded JSON)
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false
+      # AWS credentials (optional, for S3/DynamoDB)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      # Vertex AI settings (optional overrides)
+      - key: VERTEX_PROJECT
+        value: axion-orbital
+      - key: VERTEX_REGION
+        value: us-central1
+      - key: VERTEX_ENDPOINT_ID
+        value: "6313262725782831104"
+      # GCS bucket
+      - key: GCS_BUCKET
+        value: axion-satellite-imagery

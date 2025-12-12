@@ -1,0 +1,11 @@
+{
+  "amazon_rainforest": {
+    "species_count": 156,
+    "dominant": [
+      "Ceiba pentandra",
+      "Bertholletia excelsa"
+    ],
+    "shannon_index": 3.2,
+    "biomass_per_hectare": 280
+  }
+}

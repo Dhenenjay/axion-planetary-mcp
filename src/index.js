@@ -24,13 +24,9 @@ const __dirname = path.dirname(__filename);
 let models;
 try {
   const modelsPath = path.join(__dirname, 'models', 'calibrated-geospatial-models.cjs');
-  // Convert Windows path to file URL for ESM import
-  const modelUrl = process.platform === 'win32' 
-    ? 'file:///' + modelsPath.replace(/\\/g, '/')
-    : modelsPath;
-  models = await import(modelUrl);
+  models = await import(modelsPath);
 } catch (error) {
-  process.stderr.write(`Failed to load models: ${error}\n`);
+  console.error('Failed to load models:', error);
   process.exit(1);
 }
 
@@ -41,34 +37,35 @@ async function initializeEarthEngine() {
   if (eeInitialized) return true;
   
   try {
-    // Check for service account credentials from GOOGLE_APPLICATION_CREDENTIALS
-    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    // Check for service account credentials
+    const privateKey = process.env.EARTH_ENGINE_PRIVATE_KEY;
+    const serviceAccount = process.env.EARTH_ENGINE_SERVICE_ACCOUNT;
     
-    if (credentialsPath && fs.existsSync(credentialsPath)) {
-      const key = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
-      
-      return new Promise((resolve) => {
-        ee.data.authenticateViaPrivateKey(key, () => {
-          ee.initialize(null, null, () => {
-            eeInitialized = true;
-            resolve(true);
-          }, (error) => {
-            // Log to stderr, not stdout
-            process.stderr.write(`Failed to initialize Earth Engine: ${error}\n`);
-            resolve(false);
-          });
+    if (privateKey && serviceAccount) {
+      const key = JSON.parse(fs.readFileSync(privateKey, 'utf8'));
+      ee.data.authenticateViaPrivateKey(key, () => {
+        ee.initialize(null, null, () => {
+          console.log('Earth Engine initialized with service account');
+          eeInitialized = true;
         }, (error) => {
-          process.stderr.write(`Failed to authenticate Earth Engine: ${error}\n`);
-          resolve(false);
+          console.error('Failed to initialize Earth Engine:', error);
         });
       });
     } else {
-      // Skip OAuth authentication in MCP server context
-      process.stderr.write('No GOOGLE_APPLICATION_CREDENTIALS found\n');
-      return false;
+      // Try default authentication
+      ee.data.authenticateViaOauth(() => {
+        ee.initialize(null, null, () => {
+          console.log('Earth Engine initialized with OAuth');
+          eeInitialized = true;
+        }, (error) => {
+          console.error('Failed to initialize Earth Engine:', error);
+        });
+      });
     }
+    
+    return eeInitialized;
   } catch (error) {
-    process.stderr.write(`Earth Engine initialization error: ${error}\n`);
+    console.error('Earth Engine initialization error:', error);
     return false;
   }
 }
@@ -362,7 +359,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start the server
 async function main() {
-  process.stderr.write('Starting Earth Engine MCP Server...\n');
+  console.log('Starting Earth Engine MCP Server...');
   
   // Initialize Earth Engine on startup
   await initializeEarthEngine();
@@ -370,11 +367,11 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   
-  process.stderr.write('Earth Engine MCP Server running\n');
-  process.stderr.write(`Available tools: ${Object.keys(TOOLS).join(', ')}\n`);
+  console.log('Earth Engine MCP Server running');
+  console.log('Available tools:', Object.keys(TOOLS).join(', '));
 }
 
 main().catch((error) => {
-  process.stderr.write(`Server error: ${error}\n`);
+  console.error('Server error:', error);
   process.exit(1);
 });

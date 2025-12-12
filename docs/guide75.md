@@ -1,1 +1,0 @@
-# Guide 75\n\nThis guide covers feature 75.

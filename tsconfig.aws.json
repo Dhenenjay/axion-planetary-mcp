@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/aws/**/*.ts",
+    "src/mcp/registry.ts",
+    "src/mcp/tools/consolidated/axion_*.ts",
+    "src/utils/aws-config.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

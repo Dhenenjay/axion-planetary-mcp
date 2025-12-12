@@ -1,57 +1,80 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Testing
-coverage/
-.nyc_output
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
-# Next.js
-.next/
-out/
-build/
+# testing
+/coverage
 
-# Production
-dist/
+# next.js
+/.next/
+/out/
 
-# Environment files
-.env
-.env.local
-.env.production.local
-.env.development.local
-.env.test.local
+# production
+/build
 
-# Debug
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+# env files (can opt-in for commiting if needed)
+.env*
+!.env.example
 
-# OS
-Thumbs.db
+# IMPORTANT: Service account keys - NEVER commit these!
+*-key.json
+*-credentials.json
+service-account-*.json
+earth-engine-*.json
 
-# Logs
-logs
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# MCP logs
+mcp*.log
+server.log
 *.log
 
-# Temporary files
-tmp/
-temp/
+# Temporary sync files
 .node-xmlhttprequest-sync-*
 
-# User config
-.axion-planetary-mcp/
-
-# Test outputs
-test-results/
-*.test.js
-*.spec.js
+# Test files
+test-*.js
+test_*.js
+test_*.ts
+iowa-*.js
+california-*.js
+*-classification.js
+*-classifier*.js
+*-crops*.js
+*-map*.js
+*-realtime*.js
+*-rf-*.js
+*-step*.js
+*-train*.js
+*-working*.js
+run-*.js
+run-*.ps1
+setup-*.ps1
+check-*.js
+debug_*.js
+mcp-start.mjs
+start-mcp.cjs
+TEST_SUMMARY.md
+*.html

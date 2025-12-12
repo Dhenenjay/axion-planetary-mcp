@@ -1,0 +1,114 @@
+[
+  {
+    "name": "auth_check",
+    "description": "Verify Earth Engine initialization by fetching a trivial value"
+  },
+  {
+    "name": "search_gee_catalog",
+    "description": "Search GEE datasets by a free-text query (id/title/provider)"
+  },
+  {
+    "name": "convert_place_to_shapefile_geometry",
+    "description": "Convert any place name (city, county, state, country) to exact shapefile geometry from Earth Engine datasets. Returns GeoJSON that can be used directly for filtering, clipping, and exporting."
+  },
+  {
+    "name": "import_custom_shapefile",
+    "description": "Import a custom shapefile (from file or GeoJSON) as an Earth Engine asset for use in operations"
+  },
+  {
+    "name": "get_shapefile_boundary",
+    "description": "Get exact administrative boundary shapefile for any location (county, state, country) from Earth Engine datasets. Use this instead of bounding boxes!"
+  },
+  {
+    "name": "list_available_boundaries",
+    "description": "List all available administrative boundaries for a region or search term"
+  },
+  {
+    "name": "use_shapefile_instead_of_bbox",
+    "description": "ALWAYS USE THIS! Convert a bounding box to exact administrative shapefile boundary. Returns the precise county/state/country boundary instead of a rectangle."
+  },
+  {
+    "name": "filter_collection_by_date_and_region",
+    "description": "Filter an ImageCollection by time range and AOI (automatically detects place names like \"San Francisco\" and uses administrative boundaries)"
+  },
+  {
+    "name": "smart_filter_collection",
+    "description": "Intelligently filter a collection by detecting place names and using administrative boundaries when possible"
+  },
+  {
+    "name": "filter_by_place_name",
+    "description": "Filter a collection using a place name (automatically finds administrative boundary)"
+  },
+  {
+    "name": "get_dataset_band_names",
+    "description": "Return band names for first image in a collection or an image asset"
+  },
+  {
+    "name": "load_cloud_optimized_geotiff",
+    "description": "Load a public/service-readable COG from GCS into EE"
+  },
+  {
+    "name": "mask_clouds_from_image",
+    "description": "Apply default cloud/shadow mask for Sentinel-2 or Landsat"
+  },
+  {
+    "name": "create_clean_mosaic",
+    "description": "Create a median composite"
+  },
+  {
+    "name": "clip_image_to_region",
+    "description": "Clip image by AOI (supports place names like \"San Francisco\")"
+  },
+  {
+    "name": "resample_image_to_resolution",
+    "description": "Resample an image to a target scale"
+  },
+  {
+    "name": "calculate_spectral_index",
+    "description": "Compute NDVI/EVI/NDWI"
+  },
+  {
+    "name": "calculate_summary_statistics",
+    "description": "reduceRegion over AOI"
+  },
+  {
+    "name": "calculate_zonal_statistics",
+    "description": "reduceRegions by zones"
+  },
+  {
+    "name": "detect_change_between_images",
+    "description": "Image difference (A - B)"
+  },
+  {
+    "name": "calculate_slope_and_aspect",
+    "description": "Terrain products from DEM"
+  },
+  {
+    "name": "create_time_series_chart_for_region",
+    "description": "Monthly mean series over AOI"
+  },
+  {
+    "name": "get_map_visualization_url",
+    "description": "Get a TMS template for an image"
+  },
+  {
+    "name": "get_thumbnail_image",
+    "description": "Get thumbnail URL for an image & region"
+  },
+  {
+    "name": "export_image_to_cloud_storage",
+    "description": "Start a GeoTIFF export to GCS (supports place names like \"San Francisco\")"
+  },
+  {
+    "name": "get_export_task_status",
+    "description": "Poll status of an export task"
+  },
+  {
+    "name": "gee_script_js",
+    "description": "Execute small EE JS snippets in a sandbox (fallback)"
+  },
+  {
+    "name": "gee_sdk_call",
+    "description": "Allow-listed generic EE ops sequence (fallback)"
+  }
+]

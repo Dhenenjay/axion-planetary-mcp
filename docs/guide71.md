@@ -1,1 +1,0 @@
-# Guide 71\n\nThis guide covers feature 71.

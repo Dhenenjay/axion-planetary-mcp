@@ -1,0 +1,9 @@
+🌍 Starting Earth Engine MCP Server...
+❌ Failed to start server: TypeError: Cannot read properties of undefined (reading 'method')
+    at Server.setRequestHandler (file:///C:/Users/Dhenenjay/earth-engine-mcp/node_modules/.pnpm/@modelcontextprotocol+sdk@1.11.1/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js:320:44)
+    at main (file:///C:/Users/Dhenenjay/earth-engine-mcp/dist/index.mjs:3186:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+TypeError: Cannot read properties of undefined (reading 'method')
+    at Server.setRequestHandler (file:///C:/Users/Dhenenjay/earth-engine-mcp/node_modules/.pnpm/@modelcontextprotocol+sdk@1.11.1/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js:320:44)
+    at main (file:///C:/Users/Dhenenjay/earth-engine-mcp/dist/index.mjs:3186:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

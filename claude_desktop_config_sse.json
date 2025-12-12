@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "earth-engine-complete": {
+      "command": "node",
+      "args": ["C:\\Users\\Dhenenjay\\earth-engine-mcp\\mcp-sse-complete.js"]
+    }
+  }
+}

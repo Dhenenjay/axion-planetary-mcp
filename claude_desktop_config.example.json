@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "earth-engine": {
+      "command": "node",
+      "args": ["C:\\Users\\YourName\\earth-engine-mcp\\mcp-consolidated.js"]
+    }
+  }
+}

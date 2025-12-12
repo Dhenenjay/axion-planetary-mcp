@@ -1,1 +1,0 @@
-console.log('Embeddings test');
