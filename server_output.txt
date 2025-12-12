@@ -1,2 +1,0 @@
-Loaded service account from: C:\Users\Dhenenjay\Downloads\ee-key.json
-Earth Engine initialized! Project: stoked-flame-455410-k2
