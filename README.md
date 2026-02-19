@@ -3,7 +3,7 @@
 # 🌍 Axion Planetary MCP
 ## *The Foundation for Democratizing Geospatial AI Agents*
 
----(The hosted version is undergoing maintenance)
+---(The hosted version is undergoing maintenance ~ Will be back in 36 hours)
 
 ## 🚀 **V2.0 - Now Powered by AWS**
 
